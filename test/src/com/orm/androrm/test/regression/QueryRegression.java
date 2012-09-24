@@ -15,7 +15,7 @@ public class QueryRegression extends AndroidTestCase {
 		List<Class<? extends Model>> models = new ArrayList<Class<? extends Model>>();
 		models.add(Transaction.class);
 		
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		
 		try {
 			adapter.setModels(models);

@@ -22,7 +22,7 @@ public class FilterTest extends AndroidTestCase {
 		models.add(Person.class);
 		models.add(Car.class);
 		
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.setModels(models);
 	}
 	
@@ -42,12 +42,12 @@ public class FilterTest extends AndroidTestCase {
 	public void testInFilterModel() {
 		Person p = new Person();
 		p.setName("tom");
-		p.save(getContext());
+		p.save();
 		
 		Car c = new Car();
 		c.addDriver(p);
 		c.setName("Toyota");
-		c.save(getContext());
+		c.save();
 		
 		List<Person> drivers = new ArrayList<Person>();
 		drivers.add(p);
@@ -63,15 +63,15 @@ public class FilterTest extends AndroidTestCase {
 	public void testInFilterString() {
 		Person tom = new Person();
 		tom.setName("tom");
-		tom.save(getContext());
+		tom.save();
 		
 		Person peter = new Person();
 		peter.setName("peter");
-		peter.save(getContext());
+		peter.save();
 		
 		Person susan = new Person();
 		susan.setName("susan");
-		susan.save(getContext());
+		susan.save();
 		
 		List<String> names = new ArrayList<String>();
 		names.add("tom");
@@ -86,7 +86,7 @@ public class FilterTest extends AndroidTestCase {
 	}
 	
 	public void tearDown() {
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.drop();
 	}
 }

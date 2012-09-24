@@ -12,7 +12,7 @@ import com.orm.androrm.QuerySet;
 public class Brand extends Model {
 
 	public static final QuerySet<Brand> objects(Context context) {
-		return objects(context, Brand.class);
+		return objects(Brand.class);
 	}
 	
 	protected OneToManyField<Brand, Branch> mBranches;
@@ -34,11 +34,11 @@ public class Brand extends Model {
 	}
 	
 	public QuerySet<Branch> getBranches(Context context) {
-		return mBranches.get(context, this);
+		return mBranches.get(this);
 	}
 	
 	public int branchCount(Context context) {
-		return mBranches.get(context, this).count();
+		return mBranches.get(this).count();
 	}
 	
 	public void setName(String name) {

@@ -21,13 +21,13 @@ public class LocationFieldTest extends AndroidTestCase {
 
 		DatabaseAdapter.setDatabaseName("test_db");
 
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.setModels(models);
 	}
 
 	@Override
 	public void tearDown() {
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.drop();
 	}
 
@@ -45,9 +45,9 @@ public class LocationFieldTest extends AndroidTestCase {
 		BlankModel b = new BlankModel();
 		b.setLocation(l);
 
-		b.save(getContext());
+		b.save();
 
-		BlankModel b2 = Model.objects(getContext(), BlankModel.class).get(b.getId());
+		BlankModel b2 = Model.objects(BlankModel.class).get(b.getId());
 		Location l2 = b2.getLocation();
 
 		assertEquals(1.0, l2.getLatitude());

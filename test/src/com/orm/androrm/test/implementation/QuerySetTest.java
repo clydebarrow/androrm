@@ -26,30 +26,30 @@ public class QuerySetTest extends AndroidTestCase {
 		
 		DatabaseAdapter.setDatabaseName("test_db");
 		
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.setModels(models);
 		
 		Brand b = new Brand();
 		b.setName("Copcal");
-		b.save(getContext());
+		b.save();
 		
 		// ID 1
 		Branch b1 = new Branch();
 		b1.setName("Cashbuild Pretoria");
 		b1.setBrand(b);
-		b1.save(getContext());
+		b1.save();
 		
 		// ID 2
 		Branch b2 = new Branch();
 		b2.setName("Plumblink Pretoria");
 		b2.setBrand(b);
-		b2.save(getContext());
+		b2.save();
 		
 		// ID 3
 		Branch b3 = new Branch();
 		b3.setName("The third Branch");
 		b3.setBrand(b);
-		b3.save(getContext());
+		b3.save();
 	}
 	
 	public void testAll() {
@@ -90,7 +90,7 @@ public class QuerySetTest extends AndroidTestCase {
 	}
 	
 	public void tearDown() {
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.drop();
 	}
 }

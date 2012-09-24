@@ -28,7 +28,7 @@ public class ManyToManyFieldTest extends AndroidTestCase {
 		models.add(Branch.class);
 		models.add(Brand.class);
 		
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.setModels(models);
 	}
 
@@ -62,22 +62,22 @@ public class ManyToManyFieldTest extends AndroidTestCase {
 	public void testAddAndGet() {
 		Product p1 = new Product();
 		p1.setName("test1");
-		p1.save(getContext());
+		p1.save();
 
 		Product p2 = new Product();
 		p2.setName("test2");
-		p2.save(getContext());
+		p2.save();
 		
 		Brand b = new Brand();
 		b.setName("Copcal");
-		b.save(getContext());
+		b.save();
 
 		Supplier s = new Supplier();
 		s.setName("ACME");
 		s.setBrand(b);
 		s.addProduct(p1);
 		s.addProduct(p2);
-		s.save(getContext());
+		s.save();
 
 		s = Supplier.objects(getContext()).get(s.getId());
 
@@ -91,21 +91,21 @@ public class ManyToManyFieldTest extends AndroidTestCase {
 	public void testAddAllAndGet() {
 		Product p1 = new Product();
 		p1.setName("test1");
-		p1.save(getContext());
+		p1.save();
 
 		Product p2 = new Product();
 		p2.setName("test2");
-		p2.save(getContext());
+		p2.save();
 		
 		Brand b = new Brand();
 		b.setName("Copcal");
-		b.save(getContext());
+		b.save();
 
 		Supplier s = new Supplier();
 		s.setName("ACME");
 		s.setBrand(b);
 		s.addProducts(Arrays.asList(new Product[] { p1, p2 }));
-		s.save(getContext());
+		s.save();
 
 		s = Supplier.objects(getContext()).get(s.getId());
 
@@ -119,15 +119,15 @@ public class ManyToManyFieldTest extends AndroidTestCase {
 	public void testCount() {
 		Product p1 = new Product();
 		p1.setName("test1");
-		p1.save(getContext());
+		p1.save();
 
 		Product p2 = new Product();
 		p2.setName("test2");
-		p2.save(getContext());
+		p2.save();
 		
 		Brand b = new Brand();
 		b.setName("Copcal");
-		b.save(getContext());
+		b.save();
 
 		Supplier s = new Supplier();
 		s.setName("ACME");
@@ -136,7 +136,7 @@ public class ManyToManyFieldTest extends AndroidTestCase {
 
 		assertEquals(0, s.productCount(getContext()));
 
-		s.save(getContext());
+		s.save();
 		s = Supplier.objects(getContext()).get(s.getId());
 
 		assertEquals(2, s.productCount(getContext()));
@@ -145,11 +145,11 @@ public class ManyToManyFieldTest extends AndroidTestCase {
 	public void testSet() {
 		Product p = new Product();
 		p.setName("test product");
-		p.save(getContext());
+		p.save();
 		
 		Brand b = new Brand();
 		b.setName("Copcal");
-		b.save(getContext());
+		b.save();
 		
 		Branch b1 = new Branch();
 		b1.setName("test branch");
@@ -157,9 +157,9 @@ public class ManyToManyFieldTest extends AndroidTestCase {
 		b1.addProduct(p);
 		b1.addProduct(p);
 
-		b1.save(getContext());
+		b1.save();
 
-		Branch b2 = Model.objects(getContext(), Branch.class).get(b1.getId());
+		Branch b2 = Model.objects(Branch.class).get(b1.getId());
 
 		assertEquals(1, b2.getProducts(getContext()).count());
 		assertTrue(b2.getProducts(getContext()).contains(p));
@@ -168,32 +168,32 @@ public class ManyToManyFieldTest extends AndroidTestCase {
 	public void testReset() {
 		Product p1 = new Product();
 		p1.setName("test1");
-		p1.save(getContext());
+		p1.save();
 
 		Product p2 = new Product();
 		p2.setName("test2");
-		p2.save(getContext());
+		p2.save();
 		
 		Brand b = new Brand();
 		b.setName("Copcal");
-		b.save(getContext());
+		b.save();
 
 		Supplier s = new Supplier();
 		s.setName("ACME");
 		s.setBrand(b);
 		s.addProducts(Arrays.asList(new Product[] { p1, p2 }));
-		s.save(getContext());
+		s.save();
 
 		assertEquals(2, s.getProducts(getContext()).count());
 
-		s.delete(getContext());
+		s.delete();
 
 		assertEquals(0, s.getProducts(getContext()).count());
 	}
 
 	@Override
 	public void tearDown() {
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.drop();
 	}
 }

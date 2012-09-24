@@ -31,33 +31,33 @@ public class FieldResulutionTest extends AndroidTestCase {
 		
 		DatabaseAdapter.setDatabaseName("test_db");
 		
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.setModels(models);
 		
 		Brand b = new Brand();
 		b.setName("Copcal");
-		b.save(getContext());
+		b.save();
 		mB = b;
 		
 		// ID 1
 		Branch b1 = new Branch();
 		b1.setName("Cashbuild Pretoria");
 		b1.setBrand(b);
-		b1.save(getContext());
+		b1.save();
 		mB1 = b1;
 		
 		// ID 2
 		Branch b2 = new Branch();
 		b2.setName("Plumblink Pretoria");
 		b2.setBrand(b);
-		b2.save(getContext());
+		b2.save();
 		mB2 = b2;
 		
 		// ID 3
 		Branch b3 = new Branch();
 		b3.setName("The third Branch");
 		b3.setBrand(b);
-		b3.save(getContext());
+		b3.save();
 		mB3 = b3;
 		
 		// ID 1
@@ -65,7 +65,7 @@ public class FieldResulutionTest extends AndroidTestCase {
 		p1.setName("ofen");
 		p1.addBranch(b1);
 		p1.addBranch(b3);
-		p1.save(getContext());
+		p1.save();
 		mP1 = p1;
 		
 		Supplier s1 = new Supplier();
@@ -73,7 +73,7 @@ public class FieldResulutionTest extends AndroidTestCase {
 		s1.setBrand(b);
 		s1.addProduct(p1);
 		s1.addBranch(b1);
-		s1.save(getContext());
+		s1.save();
 		mS1 = s1;
 	}
 	
@@ -242,7 +242,7 @@ public class FieldResulutionTest extends AndroidTestCase {
 	
 	@Override
 	public void tearDown() {
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.drop();
 	}
 }

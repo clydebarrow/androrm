@@ -28,7 +28,7 @@ public class FilterTest extends AndroidTestCase {
 		
 		DatabaseAdapter.setDatabaseName("test_db");
 		
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.setModels(models);
 	}
 	
@@ -47,7 +47,7 @@ public class FilterTest extends AndroidTestCase {
 		
 		Product p = new Product();
 		p.setName("test product");
-		p.save(getContext());
+		p.save();
 		
 		f = new Filter();
 		f.is("supplier__product", p);
@@ -84,11 +84,11 @@ public class FilterTest extends AndroidTestCase {
 		List<Product> products = new ArrayList<Product>();
 		Product p1 = new Product();
 		p1.setName("test 1");
-		p1.save(getContext());
+		p1.save();
 		
 		Product p2 = new Product();
 		p2.setName("test 2");
-		p2.save(getContext());
+		p2.save();
 		
 		products.add(p1);
 		products.add(p2);
@@ -124,7 +124,7 @@ public class FilterTest extends AndroidTestCase {
 	
 	@Override
 	public void tearDown() {
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.drop();
 	}
 }

@@ -39,7 +39,7 @@ public class FieldCacheTest extends AndroidTestCase {
 		List<Class<? extends Model>> models = new ArrayList<Class<? extends Model>>();
 		models.add(BlankModel.class);
 
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.setModels(models);
 		
 		assertTrue(ModelCache.modelHasField(BlankModel.class, "mName"));

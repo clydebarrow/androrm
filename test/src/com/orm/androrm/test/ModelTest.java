@@ -20,7 +20,7 @@ public class ModelTest extends AndroidTestCase {
 		
 		DatabaseAdapter.setDatabaseName("test_db");
 		
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.setModels(models);
 	}
 	
@@ -35,58 +35,58 @@ public class ModelTest extends AndroidTestCase {
 	public void testSave() {
 		Model m = new BlankModel();
 
-		assertTrue(m.save(getContext()));
+		assertTrue(m.save());
 		assertEquals(1, m.getId());
 		
-		assertFalse(m.save(getContext(), 5));
+		assertFalse(m.save(5));
 	}
 	
 	public void testSaveAutoincrementOverwrite() {
 		Model m = new BlankModelNoAutoincrement();
 
 		// initial id has to be given
-		assertFalse(m.save(getContext()));
-		assertTrue(m.save(getContext(), 5));
+		assertFalse(m.save());
+		assertTrue(m.save(5));
 		assertEquals(5, m.getId());
 		// after id is set, regular save function works
-		assertTrue(m.save(getContext()));
+		assertTrue(m.save());
 	}
 	
 	public void testDelete() {
 		BlankModel m = new BlankModel();
 		
-		assertFalse(m.delete(getContext()));
+		assertFalse(m.delete());
 		
-		m.save(getContext());
+		m.save();
 		
 		int id = m.getId();
 		
-		assertTrue(m.delete(getContext()));
+		assertTrue(m.delete());
 		assertNull(m.getName());
 		assertNull(m.getLocation());
 		assertNull(m.getDate());
-		assertNull(Model.objects(getContext(), BlankModel.class).get(id));
+		assertNull(Model.objects(BlankModel.class).get(id));
 		assertEquals(0, m.getId());
 	}
 	
 	public void testEquals() {
 		BlankModel m = new BlankModel();
 		m.setName("test");
-		m.save(getContext());
+		m.save();
 		
-		BlankModel m2 = Model.objects(getContext(), BlankModel.class).get(m.getId());
+		BlankModel m2 = Model.objects(BlankModel.class).get(m.getId());
 		
 		assertEquals(m, m2);
 		
 		BlankModelNoAutoincrement m3 = new BlankModelNoAutoincrement();
-		m3.save(getContext(), 1);
+		m3.save(1);
 		
 		assertFalse(m.equals(m3));
 	}
 	
 	@Override
 	public void tearDown() {
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.drop();
 	}
 }

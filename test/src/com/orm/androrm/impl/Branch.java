@@ -11,7 +11,7 @@ import com.orm.androrm.QuerySet;
 public class Branch extends Model {
 
 	public static QuerySet<Branch> objects(Context context) {
-		return objects(context, Branch.class);
+		return objects(Branch.class);
 	}
 	
 	protected CharField mName;
@@ -41,7 +41,7 @@ public class Branch extends Model {
 	}
 	
 	public Brand getBrand(Context context) {
-		return mBrand.get(context);
+		return mBrand.get();
 	}
 	
 	public void addProduct(Product product) {
@@ -49,6 +49,6 @@ public class Branch extends Model {
 	}
 	
 	public QuerySet<Product> getProducts(Context context) {
-		return mProducts.get(context, this);
+		return mProducts.get(this);
 	}
 }

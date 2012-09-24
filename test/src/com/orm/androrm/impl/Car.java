@@ -10,7 +10,7 @@ import com.orm.androrm.QuerySet;
 public class Car extends Model {
 
 	public static final QuerySet<Car> objects(Context context) {
-		return objects(context, Car.class);
+		return objects(Car.class);
 	}
 	
 	protected OneToManyField<Car, Person> mDrivers;
@@ -32,7 +32,7 @@ public class Car extends Model {
 	}
 	
 	public QuerySet<Person> getDrivers(Context context) {
-		return mDrivers.get(context, this);
+		return mDrivers.get(this);
 	}
 	
 }

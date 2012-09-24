@@ -18,7 +18,7 @@ public class Supplier extends Model {
 	protected ManyToManyField<Supplier, Branch> mBranches;
 	
 	public static final QuerySet<Supplier> objects(Context context) {
-		return objects(context, Supplier.class);
+		return objects(Supplier.class);
 	}
 	
 	public Supplier() {
@@ -36,7 +36,7 @@ public class Supplier extends Model {
 	}
 	
 	public QuerySet<Product> getProducts(Context context) {
-		return mProducts.get(context, this);
+		return mProducts.get(this);
 	}
 	
 	public void addProduct(Product p) {
@@ -48,7 +48,7 @@ public class Supplier extends Model {
 	}
 	
 	public int productCount(Context context) {
-		return mProducts.get(context, this).count();
+		return mProducts.get(this).count();
 	}
 	
 	public void addBranch(Branch b) {
@@ -60,6 +60,6 @@ public class Supplier extends Model {
 	}
 	
 	public Brand getBrand(Context context) {
-		return mBrand.get(context);
+		return mBrand.get();
 	}
 }

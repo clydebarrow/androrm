@@ -10,7 +10,7 @@ import com.orm.androrm.QuerySet;
 public class Person extends Model {
 
 	public static final QuerySet<Person> objects(Context context) {
-		return objects(context, Person.class);
+		return objects(Person.class);
 	}
 	
 	protected ForeignKeyField<Car> mCar;

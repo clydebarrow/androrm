@@ -21,13 +21,13 @@ public class DateFieldTest extends AndroidTestCase {
 
 		DatabaseAdapter.setDatabaseName("test_db");
 
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.setModels(models);
 	}
 
 	@Override
 	public void tearDown() {
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.drop();
 	}
 
@@ -41,18 +41,20 @@ public class DateFieldTest extends AndroidTestCase {
 	public void testDateFromString() {
 		DateField d = new DateField();
 		String date = "2010-11-02T12:23:43";
+		Calendar	c = Calendar.getInstance();
 
 		d.fromString(date);
 
 		Date time = d.get();
+		c.setTime(time);
 
-		assertEquals(2010 - 1900, time.getYear());
+		assertEquals(2010, c.get(Calendar.YEAR));
 		// somehow months start at 0
-		assertEquals(11 - 1, time.getMonth());
-		assertEquals(2, time.getDay());
-		assertEquals(12, time.getHours());
-		assertEquals(23, time.getMinutes());
-		assertEquals(43, time.getSeconds());
+		assertEquals(Calendar.NOVEMBER, c.get(Calendar.MONTH));
+		assertEquals(2, c.get(Calendar.DAY_OF_MONTH));
+		assertEquals(12, c.get(Calendar.HOUR_OF_DAY));
+		assertEquals(23, c.get(Calendar.MINUTE));
+		assertEquals(43, c.get(Calendar.SECOND));
 
 		date = "sadjsdnksjdnf";
 
@@ -84,20 +86,15 @@ public class DateFieldTest extends AndroidTestCase {
 		Date date = Calendar.getInstance().getTime();
 		BlankModel model = new BlankModel();
 		model.setDate(date);
-		model.save(getContext());
+		model.save();
 
 		assertEquals(date, model.getDate());
 
-		model = Model.objects(getContext(), BlankModel.class).get(model.getId());
+		model = Model.objects(BlankModel.class).get(model.getId());
 		Date newDate = model.getDate();
 
 		assertNotNull(newDate);
 
-		assertEquals(date.getYear(), newDate.getYear());
-		assertEquals(date.getMonth(), newDate.getMonth());
-		assertEquals(date.getDay(), newDate.getDay());
-		assertEquals(date.getHours(), newDate.getHours());
-		assertEquals(date.getMinutes(), newDate.getMinutes());
-		assertEquals(date.getSeconds(), newDate.getSeconds());
+		assertEquals(date.getTime(), newDate.getTime());
 	}
 }

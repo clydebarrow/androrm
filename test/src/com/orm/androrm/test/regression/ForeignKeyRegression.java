@@ -18,7 +18,7 @@ public class ForeignKeyRegression extends AndroidTestCase {
 		models.add(Car.class);
 		models.add(Person.class);
 		
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.setModels(models);
 	}
 	
@@ -27,7 +27,7 @@ public class ForeignKeyRegression extends AndroidTestCase {
 		person.setName("Paul");
 		
 		try {
-			person.save(getContext());
+			person.save();
 		} catch (NullPointerException e) {
 			fail();
 		}
@@ -35,7 +35,7 @@ public class ForeignKeyRegression extends AndroidTestCase {
 	
 	@Override
 	public void tearDown() {
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.drop();
 	}
 	

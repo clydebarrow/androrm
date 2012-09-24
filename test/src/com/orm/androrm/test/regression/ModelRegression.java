@@ -17,7 +17,7 @@ public class ModelRegression extends AndroidTestCase {
 		List<Class<? extends Model>> models = new ArrayList<Class<? extends Model>>();
 		models.add(EmptyModel.class);
 		
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.setModels(models);
 	}
 	
@@ -25,7 +25,7 @@ public class ModelRegression extends AndroidTestCase {
 		EmptyModel model = new EmptyModel();
 		
 		try {
-			model.save(getContext());
+			model.save();
 		} catch (SQLException e) {
 			fail();
 		}
@@ -33,7 +33,7 @@ public class ModelRegression extends AndroidTestCase {
 	
 	@Override
 	public void tearDown() {
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.drop();
 	}
 	

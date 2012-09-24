@@ -12,7 +12,7 @@ import com.orm.androrm.QuerySet;
 public class Product extends Model {
 
 	public static final QuerySet<Product> objects(Context context) {
-		return objects(context, Product.class);
+		return objects(Product.class);
 	}
 	
 	protected CharField mName;
@@ -42,11 +42,11 @@ public class Product extends Model {
 	}
 	
 	public QuerySet<Branch> getBranches(Context context) {
-		return mBranches.get(context, this);
+		return mBranches.get(this);
 	}
 	
 	public int branchCount(Context context) {
-		return mBranches.get(context, this).count();
+		return mBranches.get(this).count();
 	}
 	
 }

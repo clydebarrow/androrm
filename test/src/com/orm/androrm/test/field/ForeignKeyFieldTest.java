@@ -27,7 +27,7 @@ public class ForeignKeyFieldTest extends AndroidTestCase {
 		
 		DatabaseAdapter.setDatabaseName("test_db");
 		
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.setModels(models);
 	}
 	
@@ -38,14 +38,14 @@ public class ForeignKeyFieldTest extends AndroidTestCase {
 		
 		Brand b = new Brand();
 		b.setName("Copcal");
-		b.save(getContext());
+		b.save();
 		
 		Branch br = new Branch();
 		br.setBrand(b);
 		br.setName("Pretoria");
-		br.save(getContext());
+		br.save();
 		
-		b.delete(getContext());
+		b.delete();
 		
 		assertEquals(0, Branch.objects(getContext()).count());
 	}
@@ -53,14 +53,14 @@ public class ForeignKeyFieldTest extends AndroidTestCase {
 	public void testDoNotCascade() {
 		Brand b = new Brand();
 		b.setName("Copcal");
-		b.save(getContext());
+		b.save();
 		
 		Supplier s = new Supplier();
 		s.setName("test_supplier");
 		s.setBrand(b);
-		s.save(getContext());
+		s.save();
 		
-		b.delete(getContext());
+		b.delete();
 		
 		assertEquals(1, Supplier.objects(getContext()).count());
 	}
@@ -76,7 +76,7 @@ public class ForeignKeyFieldTest extends AndroidTestCase {
 					+ Model.PK 
 					+ ") ON DELETE CASCADE", fk.getConstraint("product_id"));
 		
-		assertNull(fk.get(getContext()));
+		assertNull(fk.get());
 	}
 	
 	public void testGetDefaultsNoCascade() {
@@ -92,7 +92,7 @@ public class ForeignKeyFieldTest extends AndroidTestCase {
 					+ Model.PK 
 					+ ") ON DELETE SET NULL", fk.getConstraint("product_id"));
 		
-		assertNull(fk.get(getContext()));
+		assertNull(fk.get());
 	}
 	
 	public void testIsPersisted() {
@@ -104,7 +104,7 @@ public class ForeignKeyFieldTest extends AndroidTestCase {
 		fk.set(p);
 		
 		assertFalse(fk.isPersisted());
-		p.save(getContext());
+		p.save();
 		
 		assertTrue(fk.isPersisted());
 	}
@@ -122,36 +122,36 @@ public class ForeignKeyFieldTest extends AndroidTestCase {
 		ForeignKeyField<Product> fk = new ForeignKeyField<Product>(Product.class);
 		
 		fk.set(p);
-		assertEquals(p.getName(), fk.get(getContext()).getName());
+		assertEquals(p.getName(), fk.get().getName());
 		
-		p.save(getContext());
+		p.save();
 		
 		fk = new ForeignKeyField<Product>(Product.class);
 		fk.set(p.getId());
-		assertEquals(p.getName(), fk.get(getContext()).getName());
+		assertEquals(p.getName(), fk.get().getName());
 	}
 	
 	public void testReset() {
 		Product p = new Product();
 		p.setName("test product");
-		p.save(getContext());
+		p.save();
 		
 		ForeignKeyField<Product> fk = new ForeignKeyField<Product>(Product.class);
 		
 		fk.set(p);
 		fk.reset();
 		
-		assertNull(fk.get(getContext()));
+		assertNull(fk.get());
 		
 		fk.set(p.getId());
 		fk.reset();
 		
-		assertNull(fk.get(getContext()));
+		assertNull(fk.get());
 	}
 	
 	@Override
 	public void tearDown() {
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.drop();
 	}
 }

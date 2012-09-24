@@ -25,7 +25,7 @@ public class OneToManyFieldTest extends AndroidTestCase {
 		
 		DatabaseAdapter.setDatabaseName("test_db");
 		
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.setModels(models);
 	}
 	
@@ -38,17 +38,17 @@ public class OneToManyFieldTest extends AndroidTestCase {
 	public void testAddAndGet() {
 		Brand b = new Brand();
 		b.setName("Copcal");
-		b.save(getContext());
+		b.save();
 		
 		Branch b1 = new Branch();
 		b1.setName("test1");
 		b1.setBrand(b);
-		b1.save(getContext());
+		b1.save();
 		
 		Branch b2 = new Branch();
 		b2.setName("test2");
 		b2.setBrand(b);
-		b2.save(getContext());
+		b2.save();
 		
 		QuerySet<Branch> branches = b.getBranches(getContext());
 		
@@ -67,17 +67,17 @@ public class OneToManyFieldTest extends AndroidTestCase {
 	public void testAddAllAndGet() {
 		Brand b = new Brand();
 		b.setName("Copcal");
-		b.save(getContext());
+		b.save();
 		
 		Branch b1 = new Branch();
 		b1.setName("test1");
 		b1.setBrand(b);
-		b1.save(getContext());
+		b1.save();
 		
 		Branch b2 = new Branch();
 		b2.setName("test2");
 		b2.setBrand(b);
-		b2.save(getContext());
+		b2.save();
 		
 		b = Brand.objects(getContext()).get(b.getId());
 		
@@ -94,17 +94,17 @@ public class OneToManyFieldTest extends AndroidTestCase {
 	public void testCount() {
 		Brand b = new Brand();
 		b.setName("Copcal");
-		b.save(getContext());
+		b.save();
 		
 		Branch b1 = new Branch();
 		b1.setName("test1");
 		b1.setBrand(b);
-		b1.save(getContext());
+		b1.save();
 		
 		Branch b2 = new Branch();
 		b2.setName("test2");
 		b2.setBrand(b);
-		b2.save(getContext());
+		b2.save();
 		
 		b = Brand.objects(getContext()).get(b.getId());
 		
@@ -114,32 +114,32 @@ public class OneToManyFieldTest extends AndroidTestCase {
 	public void testReset() {
 		Brand b = new Brand();
 		b.setName("Copcal");
-		b.save(getContext());
+		b.save();
 		
 		Branch b1 = new Branch();
 		b1.setName("test1");
 		b1.setBrand(b);
-		b1.save(getContext());
+		b1.save();
 		
 		Branch b2 = new Branch();
 		b2.setName("test2");
 		b2.setBrand(b);
-		b2.save(getContext());
+		b2.save();
 		
 		Product p = new Product();
 		p.addBranches(Arrays.asList(new Branch[] { b1, b2 }));
-		p.save(getContext());
+		p.save();
 		
 		assertEquals(2, p.getBranches(getContext()).count());
 		
-		p.delete(getContext());
+		p.delete();
 		
 		assertEquals(0, p.getBranches(getContext()).count());
 	}
 	
 	@Override
 	public void tearDown() {
-		DatabaseAdapter adapter = new DatabaseAdapter(getContext());
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		adapter.drop();
 	}
 }
