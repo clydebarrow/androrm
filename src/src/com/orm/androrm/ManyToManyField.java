@@ -26,8 +26,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import android.content.Context;
-
 /**
  * @author Philipp Giese
  *
@@ -61,8 +59,8 @@ extends AbstractToManyRelation<L, R> {
 	}
 	
 	@Override
-	public QuerySet<R> get(Context context, L origin) {
-		QuerySet<R> querySet = new QuerySet<R>(context, mTargetClass);
+	public QuerySet<R> get(L origin) {
+		QuerySet<R> querySet = new QuerySet<R>(mTargetClass);
 		querySet.injectQuery(getQuery(origin.getId()));
 		
 		return querySet;

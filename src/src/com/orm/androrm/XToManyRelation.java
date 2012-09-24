@@ -25,7 +25,6 @@ package com.orm.androrm;
 import java.util.Collection;
 import java.util.List;
 
-import android.content.Context;
 
 /**
  * This interface has to be implemented by all relations, that
@@ -55,12 +54,12 @@ public interface XToManyRelation<O extends Model, T extends Model> extends Relat
 	/**
 	 * Retrieves a list of all referenced models. 
 	 * 
-	 * @param context	{@link Context} of the application.
+	 *
 	 * @param origin	Instance of the class, that is referencing.
-	 * 
-	 * @return {@link List} of referenced model classes. 
+	 *
+	 * @return {@link List} of referenced model classes.
 	 */
-	public QuerySet<T> get(Context context, O origin);
+	public QuerySet<T> get(O origin);
 	
 	public List<T> getCachedValues();
 }

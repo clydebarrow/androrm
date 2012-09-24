@@ -24,8 +24,6 @@ package com.orm.androrm;
 
 import java.util.ArrayList;
 
-import android.content.Context;
-
 /**
  * This field implicitly assumes Foreign Key relations
  * from the target class to the class implementing
@@ -45,13 +43,13 @@ extends AbstractToManyRelation<L, R> {
 	}
 	
 	@Override
-	public QuerySet<R> get(Context context, L origin) {
+	public QuerySet<R> get(L origin) {
 		String fieldName = Model.getBackLinkFieldName(mTargetClass, mOriginClass);
 		
 		Filter filter = new Filter();
 		filter.is(fieldName, origin);
 		
-		QuerySet<R> querySet = new QuerySet<R>(context, mTargetClass);
+		QuerySet<R> querySet = new QuerySet<R>(mTargetClass);
 		querySet.filter(filter);
 		
 		return querySet;

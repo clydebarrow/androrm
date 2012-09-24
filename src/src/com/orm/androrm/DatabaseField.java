@@ -70,7 +70,7 @@ public interface DatabaseField<T> extends AndrormField {
 	 * hence handed to it. 
 	 *  
 	 * @param c				{@link Cursor} pointing at data.
-	 * @param columnIndex	Index of the field value in the cursor. 
+	 * @param fieldName		Index of the field value in the cursor.
 	 */
 	public void set(Cursor c, String fieldName);
 	

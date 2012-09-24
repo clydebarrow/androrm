@@ -27,7 +27,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import android.content.Context;
 import android.database.Cursor;
 
 /**
@@ -40,9 +39,9 @@ public class QuerySet<T extends Model> implements Iterable<T> {
 	private List<T> mItems;
 	private DatabaseAdapter mAdapter;
 	
-	public QuerySet(Context context, Class<T> model) {
+	public QuerySet(Class<T> model) {
 		mClass = model;
-		mAdapter = new DatabaseAdapter(context);
+		mAdapter = new DatabaseAdapter();
 	}
 	
 	protected void injectQuery(SelectStatement query) {
@@ -216,8 +215,8 @@ public class QuerySet<T extends Model> implements Iterable<T> {
 	 * object. Note, that this operation will execute the query
 	 * on the database. Use only, if you have to. 
 	 * 
-	 * @param value
-	 * @return
+	 * @param value The object to check for
+	 * @return		true if the object is contained in the database.
 	 */
 	public boolean contains(T value) {
 		if(mQuery != null) {
@@ -236,8 +235,8 @@ public class QuerySet<T extends Model> implements Iterable<T> {
 
 	/**
 	 * See {@link QuerySet#contains}
-	 * @param values
-	 * @return
+	 * @param values	A collection of values to check for
+	 * @return			true if any of the values is contained in the database.
 	 */
 	public boolean containsAll(Collection<T> values) {
 		if(mQuery != null) {

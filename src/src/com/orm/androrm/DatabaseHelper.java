@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -55,6 +56,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 			FOREIGN_KEY_CONSTRAINTS = "OFF";
 		}
 	}
+
+	// use this to mediate multi-thread access to this helper. It would have been nice to use the lock in the database
+	// but it is private.
+	private final ReentrantLock mLock = new ReentrantLock(true);
+
+	void lock() {
+		mLock.lock();
+	}
+
+	void unLock() {
+		mLock.unlock();
+	}
+
 	/**
 	 * {@link Set} containing names of all tables, that were
 	 * created by this class.
@@ -94,7 +108,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		return mTables;
 	}
 
-	public DatabaseHelper(Context context, String dbName) {
+	protected DatabaseHelper(Context context, String dbName) {
 		super(context, dbName, null, DATABASE_VERSION);
 	}
 

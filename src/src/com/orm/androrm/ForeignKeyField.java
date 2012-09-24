@@ -74,14 +74,13 @@ public class ForeignKeyField<T extends Model> extends DataField<T> implements Re
 	 * get their value, you have to use this function. The
 	 * regular {@link DataField#get()} won't work at all times. 
 	 * 
-	 * @param context	{@link Context} of the application.
-	 * 
 	 * @return	An instance of the references model or <code>null</code>
 	 * 			if nothing could be found. 
 	 */
-	public T get(Context context) {
+	@Override
+	public T get() {
 		if(mValue == null) {
-			return Model.objects(context, mTarget).get(mReference);
+			return Model.objects(mTarget).get(mReference);
 		}
 		
 		return mValue;

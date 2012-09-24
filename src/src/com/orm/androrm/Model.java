@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
 
@@ -39,7 +38,7 @@ import android.util.Log;
  * 
  * @author Philipp Giese
  */
-public abstract class Model {
+public abstract class Model implements Comparable <Model> {
 	
 	private class PrimaryKeyField extends IntegerField {
 		
@@ -359,11 +358,10 @@ public abstract class Model {
 	}
 	
 	private <T extends Model> void collectData(
-			
-			Context 		context, 
-			ContentValues 	values, 
-			Class<T> 		clazz
-			
+
+			ContentValues values,
+			Class<T> clazz
+
 	) throws IllegalArgumentException, IllegalAccessException {
 		
 		if(clazz != null && clazz.isInstance(this)) {
@@ -374,20 +372,20 @@ public abstract class Model {
 				putValue(o, fieldName, values);
 			}
 			
-			collectData(context, values, getSuperclass(clazz));
+			collectData(values, getSuperclass(clazz));
 		}
 	}
 	
-	public <T extends Model> boolean delete(Context context) {
+	public <T extends Model> boolean delete() {
 		if(getId() != 0) {
 			Where where = new Where();
 			where.and(PK, getId());
 			
-			DatabaseAdapter adapter = new DatabaseAdapter(context);
+			DatabaseAdapter adapter = new DatabaseAdapter();
 			int affectedRows = adapter.delete(DatabaseBuilder.getTableName(getClass()), where);
 			
 			if(affectedRows != 0) {
-				mId.set(0);
+				setId(0);
 				
 				return resetFields();
 			}
@@ -433,7 +431,11 @@ public abstract class Model {
 	public int getId() {
 		return mId.get();
 	}
-	
+
+	public void setId(int id) {
+		mId.set(id);
+	}
+
 	private boolean handledByPrimaryKey(Object field) {
 		if(field instanceof PrimaryKeyField) {
 			PrimaryKeyField pk = (PrimaryKeyField) field;
@@ -449,10 +451,9 @@ public abstract class Model {
 	}
 
 	private <T extends Model, O extends Model> void persistRelations(
-			
-			Context	 context, 
+
 			Class<T> clazz
-			
+
 	) throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException {
 		
 		if(clazz != null && clazz.isInstance(this)) {
@@ -461,15 +462,15 @@ public abstract class Model {
 				Object o = field.get(this);
 				
 				if(o instanceof ManyToManyField) {
-					saveM2MToDatabase(context, clazz, o);
+					saveM2MToDatabase(clazz, o);
 				}
 				
 				if(o instanceof OneToManyField) {
-					saveO2MToDatabase(context, o);
+					saveO2MToDatabase(o);
 				}
 			}
 			
-			persistRelations(context, getSuperclass(clazz));
+			persistRelations(getSuperclass(clazz));
 		}
 	}
 	
@@ -489,37 +490,36 @@ public abstract class Model {
 		}
 	}
 	
-	public boolean save(Context context) {
+	public boolean save() {
 		if(mId.isAutoincrement() || getId() != 0) {
-			return save(context, getId(), new ContentValues());
+			return save(getId(), new ContentValues());
 		}
 		
 		return false;
 	}
 	
-	public boolean save(Context context, int id) {
+	public boolean save(int id) {
 		if(!mId.isAutoincrement()) {
-			mId.set(id);
+			setId(id);
 			
 			ContentValues values = new ContentValues();
 			values.put(PK, id);
 			
-			return save(context, id, values);
+			return save(id, values);
 		}
 		
 		return false;
 	}
 	
 	private <T extends Model> boolean save(
-			
-			Context 		context, 
-			int 			id, 
-			ContentValues 	values
-			
+
+			int id,
+			ContentValues values
+
 	) {
 		
 		try {
-			collectData(context, values, getClass());
+			collectData(values, getClass());
 		} catch(IllegalAccessException e) {
 			Log.e(TAG, "exception thrown while gathering data from object", e);
 		}
@@ -527,20 +527,20 @@ public abstract class Model {
 		Where where = new Where();
 		where.and(PK, id);
 		
-		DatabaseAdapter adapter = new DatabaseAdapter(context);
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		int rowID = adapter.doInsertOrUpdate(DatabaseBuilder.getTableName(getClass()), values, where);
 
 		if(rowID == -1) {
-			mId.set(0);
+			setId(0);
 			return false;
 		} 
 		
 		if(getId() == 0) {
-			mId.set(rowID);
+			setId(rowID);
 		}
 		
 		try {
-			persistRelations(context, getClass());
+			persistRelations(getClass());
 		} catch (Exception e) {
 			Log.e(TAG, "an exception has been thrown trying to save the relations for " 
 					+ getClass().getSimpleName(), e);
@@ -554,17 +554,16 @@ public abstract class Model {
 	
 	@SuppressWarnings("unchecked")
 	private <T extends Model> void saveM2MToDatabase(
-			
-			Context 	context, 
-			Class<T> 	clazz, 
-			Object 		field
-			
+
+			Class<T> clazz,
+			Object field
+
 	) {
 		
 		ManyToManyField<T, ?> m = (ManyToManyField<T, ?>) field;
 		List<? extends Model> targets = m.getCachedValues();
 		
-		DatabaseAdapter adapter = new DatabaseAdapter(context);
+		DatabaseAdapter adapter = new DatabaseAdapter();
 		
 		for(Model target: targets) {
 			/*
@@ -587,10 +586,9 @@ public abstract class Model {
 	
 	@SuppressWarnings("unchecked")
 	private <O extends Model, T extends Model> void saveO2MToDatabase(
-			
-			Context context, 
-			Object 	field
-			
+
+			Object field
+
 	) throws NoSuchFieldException {
 		
 		OneToManyField<T, ?> om = (OneToManyField<T, ?>) field;
@@ -603,17 +601,21 @@ public abstract class Model {
 			 */
 			if(target.getId() != 0) {
 				setBackLink((T) this, (Class<T>) getClass(), (O) target, (Class<O>) target.getClass());
-				target.save(context);
+				target.save();
 			}
 		}
 	}
-	
+
+	@Override
+	public int compareTo(Model model) {
+		return getId()-model.getId();
+	}
+
 	public static <T extends Model> QuerySet<T> objects(
-			
-			Context 	context, 
-			Class<T> 	clazz
-			
+
+			Class<T> clazz
+
 	) {
-		return new QuerySet<T>(context, clazz);
+		return new QuerySet<T>(clazz);
 	}
 }
