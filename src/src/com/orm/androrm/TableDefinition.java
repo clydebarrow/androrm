@@ -54,9 +54,8 @@ public class TableDefinition {
 	}
 
 	private <T extends DataField<?>> String getFieldDefintions(Map<String, T> fields, boolean addConstraints) {
-		boolean first = true;
 
-		String definition = "";
+		StringBuilder	definition = new StringBuilder();
 
 		for(Entry<String, T> entry : fields.entrySet()) {
 			T value = entry.getValue();
@@ -70,16 +69,13 @@ public class TableDefinition {
 			}
 
 			if(part.length() != 0) {
-				if(first) {
-					definition += part;
-					first = false;
-				} else {
-					definition += "," + part;
-				}
+				if(definition.length() != 0)
+					definition.append(',');
+				definition.append(part);
 			}
 		}
 
-		return definition;
+		return definition.toString();
 	}
 
 	public List<Class<? extends Model>> getRelationalClasses() {
@@ -96,8 +92,11 @@ public class TableDefinition {
 		String definition = getFieldDefintions(mFields, false);
 
 		if(!mRelations.isEmpty()) {
-			definition += ",";
-			definition += getFieldDefintions(mRelations, true);
+			String defs = getFieldDefintions(mRelations, true);
+			if(defs != null && defs.length() != 0) {
+				definition += ",";
+				definition += defs;
+			}
 		}
 
 		definition = "CREATE TABLE IF NOT EXISTS `" + mTableName + "` (" + definition + ");";

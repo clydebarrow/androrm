@@ -39,6 +39,7 @@ import android.database.Cursor;
 public class ForeignKeyField<T extends Model> extends DataField<T> implements Relation<T> {
 
 	private Class<T> mTarget;
+
 	private int mReference;
 	private boolean mOnDeleteCascade;
 	
@@ -54,7 +55,11 @@ public class ForeignKeyField<T extends Model> extends DataField<T> implements Re
 		mTarget = target;
 		mOnDeleteCascade = true;
 	}
-	
+
+	public int getmReference() {
+		return mReference;
+	}
+
 	/**
 	 * By default foreign key fields have the option
 	 * ON DELETE CASCADE set. This means if the model 

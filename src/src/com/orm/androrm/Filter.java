@@ -69,7 +69,17 @@ public class Filter {
 		
 		return this;
 	}
-	
+
+	public Filter lt(String key, String needle) {
+		mRules.add(new Rule(key, new Statement(getFieldName(key), "<", needle)));
+		return this;
+	}
+
+	public Filter gt(String key, String needle) {
+		mRules.add(new Rule(key, new Statement(getFieldName(key), ">", needle)));
+		return this;
+	}
+
 	private List<Object> filterValues(List<?> values) {
 		List<Object> filteredValues = new ArrayList<Object>();		
 		for(Object value: values) {
