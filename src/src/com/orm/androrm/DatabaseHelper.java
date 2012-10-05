@@ -1,24 +1,20 @@
 /**
- * 	Copyright (c) 2010 Philipp Giese
+ * Copyright (c) 2010 Philipp Giese
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ * associated documentation files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge, publish, distribute,
+ * sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in all copies or
+ * substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+ * NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 package com.orm.androrm;
 
@@ -29,9 +25,11 @@ import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+import java.util.Map.Entry;
 
 /**
  * Class to open up a database connection.
@@ -49,14 +47,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	 */
 	private static final int DATABASE_VERSION = 1;
 	private static String FOREIGN_KEY_CONSTRAINTS = "ON";
-	public static final void setForeignKeyConstraints(boolean on) {
-		if(on) {
-			FOREIGN_KEY_CONSTRAINTS = "ON";
-		} else {
-			FOREIGN_KEY_CONSTRAINTS = "OFF";
-		}
-	}
 
+	public static final void setForeignKeyConstraints(boolean on) {
+		if(on)
+			FOREIGN_KEY_CONSTRAINTS = "ON";
+		else
+			FOREIGN_KEY_CONSTRAINTS = "OFF";
+	}
 	// use this to mediate multi-thread access to this helper. It would have been nice to use the lock in the database
 	// but it is private.
 	private final ReentrantLock mLock = new ReentrantLock(true);
@@ -68,44 +65,41 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	void unLock() {
 		mLock.unlock();
 	}
-
 	/**
-	 * {@link Set} containing names of all tables, that were
-	 * created by this class.
+	 * {@link Set} containing names of all tables, that were created by this class.
 	 */
 	private static Set<String> mTables;
 	/**
-	 * {@link Set} containing all classes, that are handled
-	 * by the ORM.
+	 * {@link Set} containing all classes, that are handled by the ORM.
 	 */
 	private static Set<Class<? extends Model>> mModels;
 
 	/**
-	 * Get a {@link Set} of model classes, that are handled by
-	 * the ORM.
+	 * Get a {@link Set} of model classes, that are handled by the ORM.
 	 *
 	 * @return {@link Set} of model classes.
 	 */
 	protected static final Set<Class<? extends Model>> getModels() {
-		if(mModels == null) {
+		if(mModels == null)
 			mModels = new HashSet<Class<? extends Model>>();
-		}
 
 		return mModels;
 	}
 
 	/**
-	 * Get a {@link Set} of all tables, that were created
-	 * by this class.
+	 * Get a {@link Set} of all tables, that were created by this class.
 	 *
 	 * @return {@link Set} of tablenames.
 	 */
 	private static final Set<String> getTables() {
-		if(mTables == null) {
+		if(mTables == null)
 			mTables = new HashSet<String>();
-		}
 
 		return mTables;
+	}
+
+	protected DatabaseHelper(Context context, String dbName, int version) {
+		super(context, dbName, null, version);
 	}
 
 	protected DatabaseHelper(Context context, String dbName) {
@@ -114,15 +108,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 	/**
 	 * Drops all tables of the database.
+	 *
 	 * @param db {@link SQLiteDatabase}.
 	 */
 	protected void drop(SQLiteDatabase db) {
 		db.execSQL("PRAGMA foreign_keys=OFF;");
-		
-		for(String table: getTables()) {
+
+		for(String table : getTables())
 			db.execSQL("DROP TABLE IF EXISTS " + table);
-		}
-		
+
 		db.execSQL("PRAGMA foreign_keys=" + FOREIGN_KEY_CONSTRAINTS + ";");
 
 		mTables.clear();
@@ -131,12 +125,27 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		for(Class<? extends Model> model: getModels()) {
+		for(Class<? extends Model> model : getModels()) {
 			List<TableDefinition> tableDefinitions = DatabaseBuilder.getTableDefinitions(model);
 
-			for(TableDefinition definition: tableDefinitions) {
-				db.execSQL(definition.toString());
-				getTables().add(definition.getTableName());
+			for(TableDefinition definition : tableDefinitions) {
+				db.execSQL(definition.toString());			// create the table
+				getTables().add(definition.getTableName());	// add table to the list
+				// build a list of the columns in the table now
+				Cursor c = db.rawQuery(String.format("PRAGMA table_info(%s)", definition.getTableName()), null);
+				Set<String> columns = new HashSet<String>(c.getCount());
+				int idx = c.getColumnIndex("name");
+				while(c.moveToNext())
+					columns.add(c.getString(idx));
+				c.close();
+				// check that all the columns are in the database
+				for(Entry<String, DataField<?>> entry : definition.getFields()) {
+					if(!columns.contains(entry.getKey())) {
+						String coldef = entry.getValue().getDefinition(entry.getKey());
+						Log.d(TAG, String.format("alter table %s add column %s", definition.getTableName(), coldef));
+						db.execSQL(String.format("alter table %s add column %s", definition.getTableName(), coldef));
+					}
+				}
 			}
 		}
 	}
@@ -145,34 +154,28 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	public void onOpen(SQLiteDatabase db) {
 		super.onOpen(db);
 
-		if (!db.isReadOnly()) {
+		if(!db.isReadOnly())
 			// Enable foreign key constraints
 			db.execSQL("PRAGMA foreign_keys=" + FOREIGN_KEY_CONSTRAINTS + ";");
-		}
 	}
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		Log.w(TAG, "Upgrading database from version " + oldVersion + " to " +
-				newVersion + ", which will destroy all data.");
-
-		drop(db);
+		Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
+				+ newVersion);
 		onCreate(db);
-
 	}
-
-	/**
-	 * Registers all given models with the ORM and triggers {@link DatabaseHelper#onCreate(SQLiteDatabase)}
-	 * to create the database.
-	 *
-	 * @param db		{@link SQLiteDatabase Database} instance.
-	 * @param models	{@link List} of classes inheriting from {@link Model}.
-	 */
-	protected void setModels(SQLiteDatabase db, Collection<Class<? extends Model>> models) {
+/**
+ * Registers all given models with the ORM and triggers
+ * {@link DatabaseHelper#onCreate(SQLiteDatabase)} to create the database.
+ *
+ * @param db		   {@link SQLiteDatabase Database} instance.
+ * @param models	{@link List} of classes inheriting from {@link Model}.
+ */
+protected void setModels(SQLiteDatabase db, Collection<Class<? extends Model>> models) {
 		mModels = new HashSet<Class<? extends Model>>();
 		mModels.addAll(models);
 
 		onCreate(db);
 	}
-
 }

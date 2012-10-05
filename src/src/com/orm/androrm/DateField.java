@@ -86,10 +86,15 @@ public class DateField extends DataField<Date> {
 	 * 
 	 * @return	String representation of {@link DataField#mValue}.
 	 */
+
 	public String getDateString() {
-		if(mValue != null) {
+		return getDateString(mValue);
+	}
+
+	static public String getDateString(Date value) {
+		if(value != null) {
 			Calendar cal = Calendar.getInstance();
-			cal.setTime(mValue);
+			cal.setTime(value);
 			
 			int year = cal.get(Calendar.YEAR);
 			int month = cal.get(Calendar.MONTH) + 1;

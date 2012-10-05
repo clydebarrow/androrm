@@ -23,6 +23,7 @@
 package com.orm.androrm;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -70,6 +71,7 @@ public class Filter {
 		return this;
 	}
 
+	
 	public Filter lt(String key, String needle) {
 		mRules.add(new Rule(key, new Statement(getFieldName(key), "<", needle)));
 		return this;
@@ -77,6 +79,16 @@ public class Filter {
 
 	public Filter gt(String key, String needle) {
 		mRules.add(new Rule(key, new Statement(getFieldName(key), ">", needle)));
+		return this;
+	}
+
+	public Filter before(String key, Date needle) {
+		mRules.add(new Rule(key, new Statement(getFieldName(key), "<", DateField.getDateString(needle))));
+		return this;
+	}
+
+	public Filter after(String key, Date needle) {
+		mRules.add(new Rule(key, new Statement(getFieldName(key), ">", DateField.getDateString(needle))));
 		return this;
 	}
 
@@ -128,10 +140,9 @@ public class Filter {
 	 */
 	public Filter in(String key, List<?> values) {
 		mRules.add(new Rule(key, new InStatement(getFieldName(key), filterValues(values))));
-		
 		return this;
 	}
-	
+
 	/**
 	 * See {@link Filter#is(String, String)}.
 	 */

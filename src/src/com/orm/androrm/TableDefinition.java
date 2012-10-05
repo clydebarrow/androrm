@@ -1,24 +1,20 @@
 /**
- * 	Copyright (c) 2010 Philipp Giese
+ * Copyright (c) 2010 Philipp Giese
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ * associated documentation files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge, publish, distribute,
+ * sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in all copies or
+ * substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+ * NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 package com.orm.androrm;
 
@@ -27,8 +23,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import org.apache.commons.lang3.StringUtils;
 
 public class TableDefinition {
+
 	private String mTableName;
 	private Map<String, DataField<?>> mFields;
 	private Map<String, ForeignKeyField<? extends Model>> mRelations;
@@ -44,38 +43,41 @@ public class TableDefinition {
 	public void addField(String fieldName, DataField<?> field) {
 		mFields.put(fieldName, field);
 
-		if(field instanceof ForeignKeyField) {
-			mRelations.put(fieldName, (ForeignKeyField<?>)field);
-		}
+		if(field instanceof ForeignKeyField)
+			mRelations.put(fieldName, (ForeignKeyField<?>) field);
 	}
 
 	public <T extends Model> void addRelationalClass(Class<T> clazz) {
 		mRelationalClasses.add(clazz);
 	}
 
-	private <T extends DataField<?>> String getFieldDefintions(Map<String, T> fields, boolean addConstraints) {
+	public Set<Entry<String, DataField<?>>> getFields() {
+		return mFields.entrySet();
+	}
 
-		StringBuilder	definition = new StringBuilder();
-
-		for(Entry<String, T> entry : fields.entrySet()) {
-			T value = entry.getValue();
+	private List<String> getFieldDefinitions() {
+		List<String> fields = new ArrayList<String>();
+		for(Entry<String, DataField<?>> entry : mFields.entrySet()) {
+			DataField<?> value = entry.getValue();
 			String part = value.getDefinition(entry.getKey());
+			if(part.length() != 0)
+				fields.add(part);
+		}
+		return fields;
+	}
 
-			if(addConstraints
-					&& value instanceof ForeignKeyField) {
-
-				ForeignKeyField<?> fk = (ForeignKeyField<?>)value;
-				part = fk.getConstraint(entry.getKey());
-			}
-
-			if(part.length() != 0) {
-				if(definition.length() != 0)
-					definition.append(',');
-				definition.append(part);
+	private List<String> getConstraints() {
+		List<String> fields = new ArrayList<String>();
+		for(Entry<String, DataField<?>> entry : mFields.entrySet()) {
+			DataField<?> value = entry.getValue();
+			if(value instanceof ForeignKeyField) {
+				ForeignKeyField<?> fk = (ForeignKeyField<?>) value;
+				String part = fk.getConstraint(entry.getKey());
+				if(part.length() != 0)
+					fields.add(part);
 			}
 		}
-
-		return definition.toString();
+		return fields;
 	}
 
 	public List<Class<? extends Model>> getRelationalClasses() {
@@ -89,18 +91,11 @@ public class TableDefinition {
 	@Override
 	public String toString() {
 
-		String definition = getFieldDefintions(mFields, false);
+		List<String> fields = getFieldDefinitions();
 
-		if(!mRelations.isEmpty()) {
-			String defs = getFieldDefintions(mRelations, true);
-			if(defs != null && defs.length() != 0) {
-				definition += ",";
-				definition += defs;
-			}
-		}
+		if(!mRelations.isEmpty())
+			fields.addAll(getConstraints());
 
-		definition = "CREATE TABLE IF NOT EXISTS `" + mTableName + "` (" + definition + ");";
-
-		return definition;
+		return "CREATE TABLE IF NOT EXISTS `" + mTableName + "` (" + StringUtils.join(fields, ',') + ");";
 	}
 }

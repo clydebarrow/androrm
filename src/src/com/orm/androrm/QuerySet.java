@@ -43,6 +43,10 @@ public class QuerySet<T extends Model> implements Iterable<T> {
 		mClass = model;
 		mAdapter = new DatabaseAdapter();
 	}
+
+	public SelectStatement getQuery() {
+		return mQuery;
+	}
 	
 	protected void injectQuery(SelectStatement query) {
 		mQuery = query;
