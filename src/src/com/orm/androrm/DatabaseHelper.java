@@ -18,18 +18,17 @@
  */
 package com.orm.androrm;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.locks.ReentrantLock;
-
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Class to open up a database connection.
@@ -142,9 +141,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 				for(Entry<String, DataField<?>> entry : definition.getFields()) {
 					if(!columns.contains(entry.getKey())) {
 						String coldef = entry.getValue().getDefinition(entry.getKey());
-						Log.d(TAG, String.format("alter table %s add column %s", definition.getTableName(), coldef));
+						//Log.d(TAG, String.format("alter table %s add column %s", definition.getTableName(), coldef));
 						db.execSQL(String.format("alter table %s add column %s", definition.getTableName(), coldef));
 					}
+					// create indices for foreign key fields
+					if(entry.getValue() instanceof ForeignKeyField)
+						//Log.d(TAG, String.format("create index if not exists %s_fk_idx on %s(%s)", entry.getKey(), definition.getTableName(), entry.getKey()));
+						db.execSQL(String.format("create index if not exists %s_fk_idx on %s(%s)", entry.getKey(), definition.getTableName(), entry.getKey()));
 				}
 			}
 		}

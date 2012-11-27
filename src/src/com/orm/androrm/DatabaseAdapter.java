@@ -30,6 +30,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 /**
  * This class provides access to the underlying SQLite database.
@@ -231,6 +232,7 @@ public class DatabaseAdapter {
 	}
 
 	public Cursor query(SelectStatement select) {
+		//Log.d("SQlite", select.toString());
 		return mDb.rawQuery(select.toString(), null);
 	}
 
