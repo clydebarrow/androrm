@@ -1,24 +1,20 @@
 /**
- * 	Copyright (c) 2010 Philipp Giese
+ * Copyright (c) 2010 Philipp Giese
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ * associated documentation files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge, publish, distribute,
+ * sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in all copies or
+ * substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+ * NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 package com.orm.androrm;
 
@@ -30,74 +26,45 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This class provides access to the underlying SQLite database.
  *
  * @author Philipp Giese
  */
-public class DatabaseAdapter {
+public class DatabaseAdapter extends SQLiteOpenHelper {
 
-	/**
-	 * Name that will be used for the database. Defaults
-	 * to "my_database".
-	 */
-	private static String DATABASE_NAME = "my_database";
-
-	public static Context getContext() {
-		return context;
-	}
-
-	public static void setContext(Context context) {
-		DatabaseAdapter.context = context;
-	}
-
-	private static Context context;
-
-	/**
-	 * Set the name, that will be used for the database.
-	 *
-	 * @param name Name of the database.
-	 */
-	public static final void setDatabaseName(String name) {
-		DATABASE_NAME = name;
-	}
-
-	public static final String getDatabaseName() {
-		return DATABASE_NAME;
-	}
-
-	/**
-	 * {@link DatabaseHelper Database Helper} to deal with connecting to a SQLite database
-	 * and creating tables.
-	 */
-	private static DatabaseHelper mDbHelper = null;
+	private static final String TAG = "ANDRORM:DatabaseAdapter";
 	/**
 	 * {@link android.database.sqlite.SQLiteDatabase SQLite database} to store the data.
 	 */
 	private SQLiteDatabase mDb;
+	private QueryBuilder	queryBuilder;
 
-	public DatabaseHelper getDbHelper() {
-		return mDbHelper;
+	public DatabaseAdapter(String name, Context context, int version) {
+		super(context, name, null, version);
+		queryBuilder = new QueryBuilder(this);
 	}
 
-	public DatabaseAdapter() {
-
-		synchronized(DatabaseAdapter.class){
-			if(mDbHelper == null)
-				mDbHelper = new DatabaseHelper(context, DATABASE_NAME);
-		}
+	public QueryBuilder getQueryBuilder() {
+		return queryBuilder;
 	}
-
 	/**
-	 * Closes the current connection to the database.
-	 * Call this method after every database interaction to prevent
-	 * data leaks.
+	 * Closes the current connection to the database. Call this method after every database
+	 * interaction to prevent data leaks.
 	 */
 	public void close() {
-		mDbHelper.close();
-		mDbHelper.unLock();
+		super.close();
+		unLock();
 	}
 
 	/**
@@ -133,21 +100,19 @@ public class DatabaseAdapter {
 		oldVersion.close();
 		if(b) {
 			String whereClause = null;
-			if(where != null) {
+			if(where != null)
 				whereClause = where.toString().replace(" WHERE ", "");
-			}
 
 			result = mDb.update(table, values, whereClause, null);
 		} else {
 			String nullColumnHack = null;
 
-			if(values.size() == 0) {
+			if(values.size() == 0)
 				// if no fields are defined on a model instance the nullColumnHack
 				// needs to be utilized in order to insert an empty row. 
 				nullColumnHack = Model.PK;
-			}
 
-			result = (int)mDb.insertOrThrow(table, nullColumnHack, values);
+			result = (int) mDb.insertOrThrow(table, nullColumnHack, values);
 		}
 
 		close();
@@ -159,13 +124,9 @@ public class DatabaseAdapter {
 	 */
 	public void drop() {
 		open();
-
-		mDbHelper.drop(mDb);
-		mDbHelper.onCreate(mDb);
-
+		drop(mDb);
+		onCreate(mDb);
 		close();
-
-		ModelCache.reset();
 	}
 
 	/**
@@ -178,7 +139,7 @@ public class DatabaseAdapter {
 
 		String sql = "DROP TABLE IF EXISTS " + tableName + ";";
 		mDb.execSQL(sql);
-		mDbHelper.onCreate(mDb);
+		onCreate(mDb);
 
 		close();
 	}
@@ -189,18 +150,16 @@ public class DatabaseAdapter {
 	 * @param table Query table.
 	 * @param where {@link Where} clause to apply.
 	 * @param limit {@link Limit} clause to apply.
-	 * @return    {@link Cursor} that represents the query result.
+	 * @return {@link Cursor} that represents the query result.
 	 */
 	private Cursor get(String table, Where where, Limit limit) {
 		String whereClause = null;
-		if(where != null) {
+		if(where != null)
 			whereClause = where.toString().replace(" WHERE ", "");
-		}
 
 		String limitClause = null;
-		if(limit != null) {
+		if(limit != null)
 			limitClause = limit.toString().replace(" LIMIT ", "");
-		}
 
 		Cursor result = mDb.query(table,
 				null,
@@ -215,18 +174,18 @@ public class DatabaseAdapter {
 	}
 
 	/**
-	 * This opens a new database connection. If a connection or database already exists
-	 * the system will ensure that getWritableDatabase() will return this Database.
+	 * This opens a new database connection. If a connection or database already exists the system
+	 * will ensure that getWritableDatabase() will return this Database.
 	 * <p/>
-	 * DO NOT try to do caching by yourself because this could result in an
-	 * inappropriate state of the database.
+	 * DO NOT try to do caching by yourself because this could result in an inappropriate state of
+	 * the database.
 	 *
 	 * @return this to enable chaining.
 	 * @throws SQLException
 	 */
 	public DatabaseAdapter open() throws SQLException {
-		mDbHelper.lock();
-		mDb = mDbHelper.getWritableDatabase();
+		lock();
+		mDb = getWritableDatabase();
 
 		return this;
 	}
@@ -241,16 +200,318 @@ public class DatabaseAdapter {
 	}
 
 	/**
-	 * Registers all models, that will then be handled by the
-	 * ORM.
+	 * Registers all models, that will then be handled by the ORM.
 	 *
 	 * @param models {@link List} of classes inheriting from {@link Model}.
 	 */
 	public void setModels(Collection<Class<? extends Model>> models) {
 		open();
-
-		mDbHelper.setModels(mDb, models);
-
+		setModels(mDb, models);
 		close();
+	}
+	private ModelCache modelCache = new ModelCache();
+
+	public static final String getTableName(Class<?> clazz) {
+		return clazz.getSimpleName().toLowerCase();
+	}
+
+	public void reset() {
+		modelCache.reset();
+	}
+
+	protected final <T extends Model> List<TableDefinition> getTableDefinitions(Class<T> clazz) {
+		List<TableDefinition> definitions = new ArrayList<TableDefinition>();
+
+		if(!Modifier.isAbstract(clazz.getModifiers()))
+			try {
+				if(modelCache.knowsModel(clazz))
+					return modelCache.getTableDefinitions(clazz);
+
+				T object = Model.getInstance(clazz, this);
+				TableDefinition definition = new TableDefinition(getTableName(clazz));
+
+				getFieldDefinitions(object, clazz, definition);
+
+				definitions.add(definition);
+
+				for(Class<? extends Model> c : definition.getRelationalClasses())
+					definitions.addAll(getRelationDefinitions(c));
+
+				modelCache.setTableDefinitions(clazz, definitions);
+
+				return definitions;
+			} catch(IllegalAccessException e) {
+				Log.e(TAG, "an exception has been thrown while gathering the database structure information.", e);
+			}
+
+		return null;
+	}
+
+	private final <T extends Model> void getFieldDefinitions(
+			T instance,
+			Class<T> clazz,
+			TableDefinition modelTable) throws IllegalArgumentException, IllegalAccessException {
+
+		if(clazz != null && clazz.isInstance(instance)) {
+			// TODO: only create fields from superclass, if superclass is
+			// abstract. Otherwise create a pointer to superclass.
+
+			modelCache.addModel(clazz);
+
+			for(Field field : getFields(clazz, instance)) {
+				String name = field.getName();
+
+				Object o = field.get(instance);
+
+				if(o instanceof DataField) {
+					DataField<?> fieldObject = (DataField<?>) o;
+					modelTable.addField(name, fieldObject);
+				}
+
+				if(o instanceof ManyToManyField)
+					modelTable.addRelationalClass(clazz);
+			}
+
+			getFieldDefinitions(instance, Model.getSuperclass(clazz), modelTable);
+		}
+	}
+
+	/**
+	 * Retrieves all fields of a given class, that are <ol> <li><b>NOT</b> private</li> <li>Database
+	 * fields</li> </ol> In addition these fields are set to be accessible, so that they can then be
+	 * further processed.
+	 *
+	 * @param clazz		  Class to extract the fields from.
+	 * @param instance	Instance of that class.
+	 *
+	 * @return {@link List} of all fields, that are database fields, and that are <b>NOT</b>
+	 *            private.
+	 */
+	protected final List<Field> getFields(
+			Class<? extends Model> clazz,
+			Model instance) {
+
+		if(modelCache.knowsFields(clazz))
+			return modelCache.fieldsForModel(clazz);
+
+		Field[] declaredFields = clazz.getDeclaredFields();
+		List<Field> fields = new ArrayList<Field>();
+
+		try {
+			for(int i = 0, length = declaredFields.length; i < length; i++) {
+				Field field = declaredFields[i];
+
+				if(!Modifier.isPrivate(field.getModifiers())) {
+					field.setAccessible(true);
+					Object f = field.get(instance);
+
+					if(isDatabaseField(f))
+						fields.add(field);
+				}
+			}
+		} catch(IllegalAccessException e) {
+			Log.e(TAG, "exception thrown while trying to gain access to fields of class "
+					+ clazz.getSimpleName(), e);
+		}
+
+		modelCache.setModelFields(clazz, fields);
+
+		return fields;
+	}
+
+	private final boolean isDatabaseField(Object field) {
+		if(field != null)
+			if(field instanceof DataField
+					|| isRelationalField(field))
+				return true;
+
+		return false;
+	}
+
+	protected final boolean isRelationalField(Object field) {
+		if(field != null)
+			if(field instanceof ForeignKeyField
+					|| field instanceof OneToManyField
+					|| field instanceof ManyToManyField)
+				return true;
+
+		return false;
+	}
+
+	private final <T extends Model> List<TableDefinition> getRelationDefinitions(Class<T> clazz) {
+		List<TableDefinition> definitions = new ArrayList<TableDefinition>();
+
+		T object = Model.getInstance(clazz, this);
+		getRelationDefinitions(object, clazz, definitions);
+
+		return definitions;
+	}
+
+	@SuppressWarnings("unchecked")
+	private final <T extends Model> void getRelationDefinitions(
+			T instance,
+			Class<T> clazz,
+			List<TableDefinition> definitions) {
+
+		if(clazz != null && clazz.isInstance(instance)) {
+			for(Field field : getFields(clazz, instance))
+				try {
+					Object o = field.get(instance);
+
+					if(o instanceof ManyToManyField) {
+						ManyToManyField<T, ?> m = (ManyToManyField<T, ?>) o;
+
+						String leftHand = getTableName(clazz);
+						String rightHand = getTableName(m.getTarget());
+
+						TableDefinition definition = new TableDefinition(m.getRelationTableName());
+
+						ForeignKeyField<T> leftLink = m.getLeftLinkDescriptor();
+						ForeignKeyField<?> rightLink = m.getRightHandDescriptor();
+
+						definition.addField(leftHand, leftLink);
+						definition.addField(rightHand, rightLink);
+
+						definitions.add(definition);
+					}
+				} catch(IllegalAccessException e) {
+					Log.e(TAG, "could not gather relation definitions for class "
+							+ clazz.getSimpleName(), e);
+				}
+
+			getRelationDefinitions(instance, Model.getSuperclass(clazz), definitions);
+		}
+	}
+
+	ModelCache getModelCache() {
+		return modelCache;
+	}
+	private String FOREIGN_KEY_CONSTRAINTS = "ON";
+
+	public final void setForeignKeyConstraints(boolean on) {
+		if(on)
+			FOREIGN_KEY_CONSTRAINTS = "ON";
+		else
+			FOREIGN_KEY_CONSTRAINTS = "OFF";
+	}
+	// use this to mediate multi-thread access to this helper. It would have been nice to use the lock in the database
+	// but it is private.
+	private final ReentrantLock mLock = new ReentrantLock(true);
+
+	void lock() {
+		mLock.lock();
+	}
+
+	void unLock() {
+		mLock.unlock();
+	}
+	/**
+	 * {@link Set} containing names of all tables, that were created by this class.
+	 */
+	private Set<String> mTables = new HashSet<String>();
+	/**
+	 * {@link Set} containing all classes, that are handled by the ORM.
+	 */
+	private Set<Class<? extends Model>> mModels = new HashSet<Class<? extends Model>>();
+
+	/**
+	 * Get a {@link Set} of model classes, that are handled by the ORM.
+	 *
+	 * @return {@link Set} of model classes.
+	 */
+	protected final Set<Class<? extends Model>> getModels() {
+		return mModels;
+	}
+
+	/**
+	 * Get a {@link Set} of all tables, that were created by this class.
+	 *
+	 * @return {@link Set} of tablenames.
+	 */
+	private final Set<String> getTables() {
+		return mTables;
+	}
+
+	/**
+	 * Drops all tables of the database.
+	 *
+	 * @param db {@link SQLiteDatabase}.
+	 */
+	protected void drop(SQLiteDatabase db) {
+		db.execSQL("PRAGMA foreign_keys=OFF;");
+
+		for(String table : getTables())
+			db.execSQL("DROP TABLE IF EXISTS " + table);
+
+		db.execSQL("PRAGMA foreign_keys=" + FOREIGN_KEY_CONSTRAINTS + ";");
+
+		mTables.clear();
+		mModels.clear();
+		reset();
+	}
+
+	@Override
+	public void onCreate(SQLiteDatabase db) {
+		for(Class<? extends Model> model : getModels()) {
+			List<TableDefinition> tableDefinitions = getTableDefinitions(model);
+
+			for(TableDefinition definition : tableDefinitions) {
+				db.execSQL(definition.toString());			// create the table
+				getTables().add(definition.getTableName());	// add table to the list
+				// build a list of the columns in the table now
+				Cursor c = db.rawQuery(String.format("PRAGMA table_info(%s)", definition.getTableName()), null);
+				Set<String> columns = new HashSet<String>(c.getCount());
+				int idx = c.getColumnIndex("name");
+				while(c.moveToNext())
+					columns.add(c.getString(idx));
+				c.close();
+				// check that all the columns are in the database
+				for(Entry<String, DataField<?>> entry : definition.getFields()) {
+					if(!columns.contains(entry.getKey())) {
+						String coldef = entry.getValue().getDefinition(entry.getKey());
+						//Log.d(TAG, String.format("alter table %s add column %s", definition.getTableName(), coldef));
+						db.execSQL(String.format("alter table %s add column %s", definition.getTableName(), coldef));
+					}
+					// create indices for foreign key fields
+					if(entry.getValue() instanceof ForeignKeyField)
+						//Log.d(TAG, String.format("create index if not exists %s_fk_idx on %s(%s)", entry.getKey(), definition.getTableName(), entry.getKey()));
+						db.execSQL(String.format("create index if not exists %s_fk_idx on %s(%s)", entry.getKey(), definition.getTableName(), entry.getKey()));
+				}
+			}
+		}
+	}
+
+	@Override
+	public void onOpen(SQLiteDatabase db) {
+		super.onOpen(db);
+
+		if(!db.isReadOnly())
+			// Enable foreign key constraints
+			db.execSQL("PRAGMA foreign_keys=" + FOREIGN_KEY_CONSTRAINTS + ";");
+	}
+
+	@Override
+	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+		Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
+				+ newVersion);
+		onCreate(db);
+	}
+
+	/**
+	 * Registers all given models with the ORM and triggers
+	 * {@link DatabaseHelper#onCreate(SQLiteDatabase)} to create the database.
+	 *
+	 * @param db		   {@link SQLiteDatabase Database} instance.
+	 * @param models	{@link List} of classes inheriting from {@link Model}.
+	 */
+	protected void setModels(SQLiteDatabase db, Collection<Class<? extends Model>> models) {
+		mModels = new HashSet<Class<? extends Model>>();
+		mModels.addAll(models);
+
+		onCreate(db);
+	}
+	public <T extends Model> QuerySet<T> objects(
+			Class<T> clazz) {
+		return new QuerySet<T>(clazz, this);
 	}
 }

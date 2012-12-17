@@ -32,16 +32,15 @@ import android.database.Cursor;
 /**
  * @author Philipp Giese
  */
-public class QuerySet<T extends Model> implements Iterable<T> {
+public class QuerySet<T extends Model> extends DbAdapterReference implements Iterable<T> {
 
 	private SelectStatement mQuery;
 	private Class<T> mClass;
 	private List<T> mItems;
-	private DatabaseAdapter mAdapter;
 	
-	public QuerySet(Class<T> model) {
+	public QuerySet(Class<T> model, DatabaseAdapter adapterReference) {
+		super(adapterReference);
 		mClass = model;
-		mAdapter = new DatabaseAdapter();
 	}
 
 	public SelectStatement getQuery() {
@@ -68,7 +67,7 @@ public class QuerySet<T extends Model> implements Iterable<T> {
 		
 		if(mQuery == null) {
 			mQuery = new SelectStatement();
-			mQuery.from(DatabaseBuilder.getTableName(mClass));
+			mQuery.from(mAdapter.getTableName(mClass));
 		}
 		
 		mQuery.where(where);
@@ -103,14 +102,14 @@ public class QuerySet<T extends Model> implements Iterable<T> {
 	public QuerySet<T> all() {
 		if(mQuery == null) {
 			mQuery = new SelectStatement();
-			mQuery.from(DatabaseBuilder.getTableName(mClass));
+			mQuery.from(mAdapter.getTableName(mClass));
 		}
 		
 		return this;
 	}
 	
 	public QuerySet<T> filter(Filter filter) throws NoSuchFieldException {
-		SelectStatement query = QueryBuilder.buildQuery(mClass, filter.getRules());
+		SelectStatement query = mAdapter.getQueryBuilder().buildQuery(mClass, filter.getRules());
 		
 		if(mQuery == null) {
 			mQuery = query;
@@ -157,7 +156,7 @@ public class QuerySet<T extends Model> implements Iterable<T> {
 		T object = null;
 		
 		if(c.moveToNext()) {
-			object = Model.createObject(mClass, c);
+			object = Model.createObject(mClass, c, mAdapter);
 		}
 		
 		return object;
@@ -167,7 +166,7 @@ public class QuerySet<T extends Model> implements Iterable<T> {
 		List<T> items = new ArrayList<T>();
 		
 		while(c.moveToNext()) {
-			T object = Model.createObject(mClass, c);
+			T object = Model.createObject(mClass, c, mAdapter);
 			
 			if(object != null) {
 				items.add(object);

@@ -22,6 +22,7 @@
  */
 package com.orm.androrm;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -35,7 +36,15 @@ implements XToManyRelation<O, T> {
 	protected List<T> mValues;
 	protected Class<O> mOriginClass;
 	protected Class<T> mTargetClass;
+	protected Model	model;
 	
+	public AbstractToManyRelation(Class<O> origin, Class<T> target, Model model) {
+		this.model = model;
+		mOriginClass = origin;
+		mTargetClass = target;
+		mValues = new ArrayList<T>();
+	}
+
 	@Override
 	public void add(T value) {
 		if(value != null) {

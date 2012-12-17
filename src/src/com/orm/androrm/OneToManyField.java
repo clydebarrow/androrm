@@ -36,20 +36,18 @@ public class OneToManyField<L extends Model,
 							R extends Model> 
 extends AbstractToManyRelation<L, R> {
 
-	public OneToManyField(Class<L> origin, Class<R> target) {
-		mOriginClass = origin;
-		mTargetClass = target;
-		mValues = new ArrayList<R>();
+	public OneToManyField(Class<L> origin, Class<R> target, Model model) {
+		super(origin, target, model);
 	}
 	
 	@Override
 	public QuerySet<R> get(L origin) {
-		String fieldName = Model.getBackLinkFieldName(mTargetClass, mOriginClass);
+		String fieldName = Model.getBackLinkFieldName(mTargetClass, mOriginClass, model.getAdapter());
 		
 		Filter filter = new Filter();
 		filter.is(fieldName, origin);
 		
-		QuerySet<R> querySet = new QuerySet<R>(mTargetClass);
+		QuerySet<R> querySet = new QuerySet<R>(mTargetClass, model.getAdapter());
 		querySet.filter(filter);
 		
 		return querySet;

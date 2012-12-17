@@ -46,6 +46,7 @@ public abstract class DataField<T> implements DatabaseField<T> {
 	 * Maximum length of that field.
 	 */
 	protected int mMaxLength;
+	protected Model	model;			// this is the table that this field belongs to
 	
 	@Override
 	public T get() {

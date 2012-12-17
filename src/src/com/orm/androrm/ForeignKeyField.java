@@ -42,6 +42,7 @@ public class ForeignKeyField<T extends Model> extends DataField<T> implements Re
 
 	private int mReference;
 	private boolean mOnDeleteCascade;
+	protected Model	model;				// the table we belong to
 	
 	/**
 	 * Initializes a new foreign key field. The target
@@ -51,7 +52,9 @@ public class ForeignKeyField<T extends Model> extends DataField<T> implements Re
 	 * 
 	 * @param target	Class of the linked model. 
 	 */
-	public ForeignKeyField(Class<T> target) {
+	public ForeignKeyField(Class<T> target, Model model) {
+		super();
+		this.model = model;
 		mTarget = target;
 		mOnDeleteCascade = true;
 	}
@@ -85,7 +88,7 @@ public class ForeignKeyField<T extends Model> extends DataField<T> implements Re
 	@Override
 	public T get() {
 		if(mValue == null) {
-			return Model.objects(mTarget).get(mReference);
+			return model.getAdapter().objects(mTarget).get(mReference);
 		}
 		
 		return mValue;
@@ -101,7 +104,7 @@ public class ForeignKeyField<T extends Model> extends DataField<T> implements Re
 	 */
 	public String getConstraint(String fieldName) {
 		String constraint = "FOREIGN KEY (" + fieldName + ") " +
-			"REFERENCES " + DatabaseBuilder.getTableName(mTarget) + " (" + Model.PK + ")";
+			"REFERENCES " + model.getAdapter().getTableName(mTarget) + " (" + Model.PK + ")";
 		
 		if(mOnDeleteCascade) {
 			constraint += " ON DELETE CASCADE"; 

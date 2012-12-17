@@ -37,8 +37,13 @@ import android.util.Log;
 public class QueryBuilder {
 	
 	private static final String TAG = "ANDRORM:QUERY:BUILDER";
+	protected DatabaseAdapter mAdapter;
+
+	public QueryBuilder(DatabaseAdapter adapter) {
+		this.mAdapter = adapter;
+	}
 	
-	private static final <T extends Model> SelectStatement buildJoin(
+	private final <T extends Model> SelectStatement buildJoin(
 			
 			Class<T> 		clazz,
 			List<String> 	fields, 
@@ -47,7 +52,7 @@ public class QueryBuilder {
 			
 	) {
 		
-		T instance = Model.getInstace(clazz);
+		T instance = Model.getInstance(clazz, mAdapter);
 		
 		if(instance != null) {
 			Object fieldInstance = getFieldInstance(clazz, instance, fields.get(0));
@@ -56,7 +61,7 @@ public class QueryBuilder {
 				return resolveLastField(fieldInstance, clazz, filter);
 			} 
 			
-			if(DatabaseBuilder.isRelationalField(fieldInstance)) {
+			if(mAdapter.isRelationalField(fieldInstance)) {
 				return resolveRelationField(fieldInstance, clazz, fields, filter, depth);
 			}
 		}
@@ -64,7 +69,7 @@ public class QueryBuilder {
 		return null;
 	}
 	
-	public static final <T extends Model> SelectStatement buildQuery(
+	public final <T extends Model> SelectStatement buildQuery(
 			
 			Class<T> 	clazz, 
 			List<Rule> 	rules
@@ -74,7 +79,7 @@ public class QueryBuilder {
 		return buildQuery(clazz, rules, 0);
 	}
 	
-	private static final <T extends Model> SelectStatement buildQuery(
+	private final <T extends Model> SelectStatement buildQuery(
 			
 			Class<T> 	clazz, 
 			List<Rule> 	rules,
@@ -82,7 +87,7 @@ public class QueryBuilder {
 			
 	)  {
 		
-		String tableName = DatabaseBuilder.getTableName(clazz);
+		String tableName = mAdapter.getTableName(clazz);
 		
 		JoinStatement selfJoin = new JoinStatement();
 		selfJoin.left(tableName, "self" + depth);
@@ -95,12 +100,12 @@ public class QueryBuilder {
 		if(fields.size() == 1) {
 			String fieldName = fields.get(0);
 			
-			T instance = Model.getInstace(clazz);
+			T instance = Model.getInstance(clazz, mAdapter);
 			
 			if(instance != null) {
 				Object o = getFieldInstance(clazz, instance, fieldName);
 				
-				if(DatabaseBuilder.isRelationalField(o)) {
+				if(mAdapter.isRelationalField(o)) {
 					// gather ids for fields
 					SelectStatement s = buildJoin(clazz, fields, rule, depth);
 					
@@ -159,14 +164,14 @@ public class QueryBuilder {
 		
 	}
 	
-	private static final <T extends Model> Object getFieldInstance(
+	private final <T extends Model> Object getFieldInstance(
 			
 			Class<T> 	clazz, 
 			T 			instance, 
 			String 		fieldName
 	
 	)  {
-		Field field = Model.getField(clazz, instance, fieldName);
+		Field field = instance.getField(clazz, instance, fieldName);
 		Object fieldInstance = null;
 		
 		if(field != null) {
@@ -184,7 +189,7 @@ public class QueryBuilder {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private static final <T extends Model> SelectStatement getRelationSelection(
+	private final <T extends Model> SelectStatement getRelationSelection(
 			
 			Relation<?> r, 
 			Class<T> 	clazz, 
@@ -199,23 +204,23 @@ public class QueryBuilder {
 		if(r instanceof ManyToManyField) {
 			ManyToManyField<T, ?> m = (ManyToManyField<T, ?>) r;
 			
-			stmt.setKey(DatabaseBuilder.getTableName(target));
+			stmt.setKey(mAdapter.getTableName(target));
 			
 			where.setStatement(stmt);
 			
 			select.from(m.getRelationTableName())
-			 	  .select(DatabaseBuilder.getTableName(clazz));
+			 	  .select(mAdapter.getTableName(clazz));
 		} 
 		
 		if(r instanceof OneToManyField) {
-			String backLinkFieldName = Model.getBackLinkFieldName(target, clazz);
+			String backLinkFieldName = Model.getBackLinkFieldName(target, clazz, mAdapter);
 			
 			stmt.setKey(backLinkFieldName);
 			
 			where.setStatement(stmt);
 			
-			select.from(DatabaseBuilder.getTableName(target))
-			 	  .select(backLinkFieldName + " AS " + DatabaseBuilder.getTableName(clazz));
+			select.from(mAdapter.getTableName(target))
+			 	  .select(backLinkFieldName + " AS " + mAdapter.getTableName(clazz));
 		}	
 		
 		select.where(where)
@@ -224,7 +229,7 @@ public class QueryBuilder {
 		return select;
 	}
 	
-	private static final <T extends Model> SelectStatement resolveLastField(
+	private final <T extends Model> SelectStatement resolveLastField(
 			
 			Object 		field, 
 			Class<T> 	clazz, 
@@ -234,7 +239,7 @@ public class QueryBuilder {
 		
 		SelectStatement select = new SelectStatement();
 		
-		if(DatabaseBuilder.isRelationalField(field) 
+		if(mAdapter.isRelationalField(field) 
 				&& !(field instanceof ForeignKeyField)) {
 			
 			Relation<?> r = (Relation<?>) field;
@@ -242,7 +247,7 @@ public class QueryBuilder {
 			return getRelationSelection(r, clazz, rule);
 		} 
 		
-		String tableName = DatabaseBuilder.getTableName(clazz);
+		String tableName = mAdapter.getTableName(clazz);
 		
 		Where where = new Where();
 		where.setStatement(rule.getStatement());
@@ -255,7 +260,7 @@ public class QueryBuilder {
 		return select;
 	}
 	
-	private static final <T extends Model> SelectStatement resolveRelationField(
+	private final <T extends Model> SelectStatement resolveRelationField(
 			
 			Object 			field, 
 			Class<T> 		clazz, 
@@ -276,7 +281,7 @@ public class QueryBuilder {
 		String selectField = joinParams.get("selectField");
 		String selectAs = joinParams.get("selectAs");
 		String onLeft = joinParams.get("onLeft");
-		String onRight = DatabaseBuilder.getTableName(target);
+		String onRight = mAdapter.getTableName(target);
 		
 		/*
 		 * After the steps above the left side of the join is always known. 
@@ -309,7 +314,7 @@ public class QueryBuilder {
 		return select;
 	}
 	
-	private static final <T extends Model> Map<String, String> unwrapForeignKeyRelation(
+	private final <T extends Model> Map<String, String> unwrapForeignKeyRelation(
 			
 			String 		fieldName,
 			Class<T> 	clazz,
@@ -325,7 +330,7 @@ public class QueryBuilder {
 		 * is the table corresponding to the class,
 		 * we are currently examining.
 		 */
-		String leftTable = DatabaseBuilder.getTableName(clazz);
+		String leftTable = mAdapter.getTableName(clazz);
 		joinParams.put("leftTable", leftTable);
 		/*
 		 * As we do not operate on a relation table
@@ -350,7 +355,7 @@ public class QueryBuilder {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private static final <T extends Model> Map<String, String> unwrapManyToManyRelation(
+	private final <T extends Model> Map<String, String> unwrapManyToManyRelation(
 			
 			Class<T> 	clazz, 
 			Relation<?> r
@@ -371,7 +376,7 @@ public class QueryBuilder {
 		 * after the classes they represent. Thus we select the field
 		 * with the name of the class we are currently examining.
 		 */
-		String selectField = DatabaseBuilder.getTableName(clazz);
+		String selectField = mAdapter.getTableName(clazz);
 		joinParams.put("selectField", selectField);
 		/*
 		 * When dealing with foreign keys the selection field has
@@ -383,12 +388,12 @@ public class QueryBuilder {
 		 * Field of the left table that will be considered 
 		 * during the join. 
 		 */
-		joinParams.put("onLeft", DatabaseBuilder.getTableName(m.getTarget()));
+		joinParams.put("onLeft", mAdapter.getTableName(m.getTarget()));
 		
 		return joinParams;
 	}
 	
-	private static final <T extends Model> Map<String, String> unwrapOneToManyField(
+	private final <T extends Model> Map<String, String> unwrapOneToManyField(
 			
 			String 		fieldName,
 			Class<T> 	clazz,
@@ -403,18 +408,18 @@ public class QueryBuilder {
 		 * One to Many fields have no field representation in their origin 
 		 * class. Therefore we must determine the target class for the join.
 		 */
-		joinParams.put("leftTable", DatabaseBuilder.getTableName(target));
+		joinParams.put("leftTable", mAdapter.getTableName(target));
 		
 		/*
 		 * On the target class we select the field pointing back to 
 		 * the origin class
 		 */
-		joinParams.put("selectField", Model.getBackLinkFieldName(target, clazz));
+		joinParams.put("selectField", Model.getBackLinkFieldName(target, clazz, mAdapter));
 		
 		/*
 		 * This field has to be selected under the alias of the origin class.
 		 */
-		joinParams.put("selectAs", DatabaseBuilder.getTableName(clazz));
+		joinParams.put("selectAs", mAdapter.getTableName(clazz));
 		
 		/*
 		 * We have to join over the primary key of the target class,
@@ -425,7 +430,7 @@ public class QueryBuilder {
 		return joinParams;
 	}
 	
-	private static final <T extends Model> Map<String, String> unwrapRelation(
+	private final <T extends Model> Map<String, String> unwrapRelation(
 			
 			Relation<?> r, 
 			String 		fieldName,

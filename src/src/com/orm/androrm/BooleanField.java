@@ -39,7 +39,6 @@ public class BooleanField extends DataField<Boolean>{
 
 	public BooleanField() {
 		setUp();
-		
 		mValue = false;
 	}
 	
