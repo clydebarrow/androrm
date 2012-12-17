@@ -28,6 +28,7 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -48,16 +49,27 @@ public class DatabaseAdapter extends SQLiteOpenHelper {
 	 * {@link android.database.sqlite.SQLiteDatabase SQLite database} to store the data.
 	 */
 	private SQLiteDatabase mDb;
-	private QueryBuilder	queryBuilder;
+	private QueryBuilder queryBuilder;
+	private ModelCache modelCache;
+	/**
+	 * {@link Set} containing names of all tables, that were created by this class.
+	 */
+	private Set<String> mTables = new HashSet<String>();
+	/**
+	 * {@link Set} containing all classes, that are handled by the ORM.
+	 */
+	private Set<Class<? extends Model>> mModels = new HashSet<Class<? extends Model>>();
 
 	public DatabaseAdapter(String name, Context context, int version) {
 		super(context, name, null, version);
 		queryBuilder = new QueryBuilder(this);
+		modelCache = new ModelCache();
 	}
 
 	public QueryBuilder getQueryBuilder() {
 		return queryBuilder;
 	}
+
 	/**
 	 * Closes the current connection to the database. Call this method after every database
 	 * interaction to prevent data leaks.
@@ -206,12 +218,13 @@ public class DatabaseAdapter extends SQLiteOpenHelper {
 	 */
 	public void setModels(Collection<Class<? extends Model>> models) {
 		open();
-		setModels(mDb, models);
+		mModels = new HashSet<Class<? extends Model>>();
+		mModels.addAll(models);
+		onCreate(mDb);
 		close();
 	}
-	private ModelCache modelCache = new ModelCache();
 
-	public static final String getTableName(Class<?> clazz) {
+	public String getTableName(Class<?> clazz) {
 		return clazz.getSimpleName().toLowerCase();
 	}
 
@@ -227,7 +240,7 @@ public class DatabaseAdapter extends SQLiteOpenHelper {
 				if(modelCache.knowsModel(clazz))
 					return modelCache.getTableDefinitions(clazz);
 
-				T object = Model.getInstance(clazz, this);
+				T object = getInstance(clazz);
 				TableDefinition definition = new TableDefinition(getTableName(clazz));
 
 				getFieldDefinitions(object, clazz, definition);
@@ -341,7 +354,7 @@ public class DatabaseAdapter extends SQLiteOpenHelper {
 	private final <T extends Model> List<TableDefinition> getRelationDefinitions(Class<T> clazz) {
 		List<TableDefinition> definitions = new ArrayList<TableDefinition>();
 
-		T object = Model.getInstance(clazz, this);
+		T object = getInstance(clazz);
 		getRelationDefinitions(object, clazz, definitions);
 
 		return definitions;
@@ -405,14 +418,6 @@ public class DatabaseAdapter extends SQLiteOpenHelper {
 	void unLock() {
 		mLock.unlock();
 	}
-	/**
-	 * {@link Set} containing names of all tables, that were created by this class.
-	 */
-	private Set<String> mTables = new HashSet<String>();
-	/**
-	 * {@link Set} containing all classes, that are handled by the ORM.
-	 */
-	private Set<Class<? extends Model>> mModels = new HashSet<Class<? extends Model>>();
 
 	/**
 	 * Get a {@link Set} of model classes, that are handled by the ORM.
@@ -497,21 +502,72 @@ public class DatabaseAdapter extends SQLiteOpenHelper {
 		onCreate(db);
 	}
 
-	/**
-	 * Registers all given models with the ORM and triggers
-	 * {@link DatabaseHelper#onCreate(SQLiteDatabase)} to create the database.
-	 *
-	 * @param db		   {@link SQLiteDatabase Database} instance.
-	 * @param models	{@link List} of classes inheriting from {@link Model}.
-	 */
-	protected void setModels(SQLiteDatabase db, Collection<Class<? extends Model>> models) {
-		mModels = new HashSet<Class<? extends Model>>();
-		mModels.addAll(models);
 
-		onCreate(db);
-	}
 	public <T extends Model> QuerySet<T> objects(
 			Class<T> clazz) {
 		return new QuerySet<T>(clazz, this);
 	}
+
+	protected <T extends Model> T getInstance(Class<T> clazz) {
+		T instance = null;
+		try {
+			Constructor<T> constructor = clazz.getConstructor();
+			instance = constructor.newInstance();
+			instance.setAdapter(this);
+		} catch(Exception e) {
+			Log.e(TAG, "exception thrown while trying to create representation of "
+					+ clazz.getSimpleName(), e);
+		}
+		return instance;
+	}
+	protected <O extends Model, T extends Model> String getBackLinkFieldName(
+			Class<O> originClass,
+			Class<T> targetClass) {
+
+		Field fk = null;
+
+		try {
+			fk = getForeignKeyField(targetClass, originClass, getInstance(originClass));
+		} catch(IllegalAccessException e) {
+			Log.e(TAG, "an exception has been thrown trying to gather the foreign key field pointing to "
+					+ targetClass.getSimpleName()
+					+ " from origin class "
+					+ originClass.getSimpleName(), e);
+		}
+
+		if(fk != null)
+			return fk.getName();
+
+		return null;
+	}
+
+	protected  <T extends Model, O extends Model> Field getForeignKeyField(
+			Class<T> target,
+			Class<O> originClass,
+			O origin) throws IllegalArgumentException, IllegalAccessException {
+
+		Field fk = null;
+
+		if(originClass != null && originClass.isInstance(origin)) {
+			for(Field field : origin.getAdapter().getFields(originClass, origin)) {
+				Object f = field.get(origin);
+
+				if(f instanceof ForeignKeyField) {
+					ForeignKeyField<?> tmp = (ForeignKeyField<?>) f;
+					Class<? extends Model> t = tmp.getTarget();
+
+					if(t.equals(target)) {
+						fk = field;
+						break;
+					}
+				}
+			}
+
+			if(fk == null)
+				fk = getForeignKeyField(target, Model.getSuperclass(originClass), origin);
+		}
+
+		return fk;
+	}
+
 }

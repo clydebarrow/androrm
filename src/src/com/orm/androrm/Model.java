@@ -104,7 +104,7 @@ public abstract class Model implements Comparable<Model> {
 			Class<T> clazz,
 			Cursor c, DatabaseAdapter adapter) {
 
-		T object = getInstance(clazz, adapter);
+		T object = adapter.getInstance(clazz);
 
 		try {
 			object.fillUpData(clazz, c);
@@ -128,28 +128,6 @@ public abstract class Model implements Comparable<Model> {
 
 			fillUpData(getSuperclass(clazz), c);
 		}
-	}
-
-	protected static <O extends Model, T extends Model> String getBackLinkFieldName(
-			Class<O> originClass,
-			Class<T> targetClass,
-			DatabaseAdapter adapter) {
-
-		Field fk = null;
-
-		try {
-			fk = getForeignKeyField(targetClass, originClass, getInstance(originClass, adapter));
-		} catch(IllegalAccessException e) {
-			Log.e(TAG, "an exception has been thrown trying to gather the foreign key field pointing to "
-					+ targetClass.getSimpleName()
-					+ " from origin class "
-					+ originClass.getSimpleName(), e);
-		}
-
-		if(fk != null)
-			return fk.getName();
-
-		return null;
 	}
 
 	private <T extends Model> List<String> getEligibleFields(
@@ -207,57 +185,13 @@ public abstract class Model implements Comparable<Model> {
 			Class<T> target) throws IllegalArgumentException, IllegalAccessException {
 
 		if(originClass != null && originClass.isInstance(origin)) {
-			Field fkField = getForeignKeyField(target, originClass, origin);
+			Field fkField = mAdapter.getForeignKeyField(target, originClass, origin);
 
 			if(fkField != null)
 				return (ForeignKeyField<T>) fkField.get(origin);
 		}
 
 		return null;
-	}
-
-	private static <T extends Model, O extends Model> Field getForeignKeyField(
-			Class<T> target,
-			Class<O> originClass,
-			O origin) throws IllegalArgumentException, IllegalAccessException {
-
-		Field fk = null;
-
-		if(originClass != null && originClass.isInstance(origin)) {
-			for(Field field : origin.getAdapter().getFields(originClass, origin)) {
-				Object f = field.get(origin);
-
-				if(f instanceof ForeignKeyField) {
-					ForeignKeyField<?> tmp = (ForeignKeyField<?>) f;
-					Class<? extends Model> t = tmp.getTarget();
-
-					if(t.equals(target)) {
-						fk = field;
-						break;
-					}
-				}
-			}
-
-			if(fk == null)
-				fk = getForeignKeyField(target, getSuperclass(originClass), origin);
-		}
-
-		return fk;
-	}
-
-	protected static <T extends Model> T getInstance(Class<T> clazz, DatabaseAdapter adapter) {
-		T instance = null;
-
-		try {
-			Constructor<T> constructor = clazz.getConstructor();
-			instance = constructor.newInstance();
-			instance.setAdapter(adapter);
-		} catch(Exception e) {
-			Log.e(TAG, "exception thrown while trying to create representation of "
-					+ clazz.getSimpleName(), e);
-		}
-
-		return instance;
 	}
 
 	@SuppressWarnings("unchecked")

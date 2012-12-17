@@ -42,7 +42,7 @@ extends AbstractToManyRelation<L, R> {
 	
 	@Override
 	public QuerySet<R> get(L origin) {
-		String fieldName = Model.getBackLinkFieldName(mTargetClass, mOriginClass, model.getAdapter());
+		String fieldName = model.getAdapter().getBackLinkFieldName(mTargetClass, mOriginClass);
 		
 		Filter filter = new Filter();
 		filter.is(fieldName, origin);

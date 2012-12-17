@@ -22,13 +22,12 @@
  */
 package com.orm.androrm;
 
+import android.util.Log;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import android.util.Log;
 
 /**
  * @author Philipp GIese
@@ -52,7 +51,7 @@ public class QueryBuilder {
 			
 	) {
 		
-		T instance = Model.getInstance(clazz, mAdapter);
+		T instance = mAdapter.getInstance(clazz);
 		
 		if(instance != null) {
 			Object fieldInstance = getFieldInstance(clazz, instance, fields.get(0));
@@ -100,7 +99,7 @@ public class QueryBuilder {
 		if(fields.size() == 1) {
 			String fieldName = fields.get(0);
 			
-			T instance = Model.getInstance(clazz, mAdapter);
+			T instance = mAdapter.getInstance(clazz);
 			
 			if(instance != null) {
 				Object o = getFieldInstance(clazz, instance, fieldName);
@@ -213,7 +212,7 @@ public class QueryBuilder {
 		} 
 		
 		if(r instanceof OneToManyField) {
-			String backLinkFieldName = Model.getBackLinkFieldName(target, clazz, mAdapter);
+			String backLinkFieldName = mAdapter.getBackLinkFieldName(target, clazz);
 			
 			stmt.setKey(backLinkFieldName);
 			
@@ -414,7 +413,7 @@ public class QueryBuilder {
 		 * On the target class we select the field pointing back to 
 		 * the origin class
 		 */
-		joinParams.put("selectField", Model.getBackLinkFieldName(target, clazz, mAdapter));
+		joinParams.put("selectField", mAdapter.getBackLinkFieldName(target, clazz));
 		
 		/*
 		 * This field has to be selected under the alias of the origin class.
