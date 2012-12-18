@@ -71,6 +71,16 @@ public class Filter {
 		return this;
 	}
 
+	public Filter lt(String key, int needle) {
+		mRules.add(new Rule(key, new Statement(getFieldName(key), "<", needle)));
+		return this;
+	}
+
+	public Filter gt(String key, int needle) {
+		mRules.add(new Rule(key, new Statement(getFieldName(key), ">", needle)));
+		return this;
+	}
+
 	
 	public Filter lt(String key, String needle) {
 		mRules.add(new Rule(key, new Statement(getFieldName(key), "<", needle)));
