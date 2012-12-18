@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010 Philipp Giese
+ * Copyright (C) 2012 Clyde Stubbs,   2010 Philipp Giese
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -148,11 +148,9 @@ public class DatabaseAdapter extends SQLiteOpenHelper {
 	 */
 	public void drop(String tableName) {
 		open();
-
-		String sql = "DROP TABLE IF EXISTS " + tableName + ";";
+		String sql = "DROP TABLE IF EXISTS `" + tableName + "`;";
 		mDb.execSQL(sql);
 		onCreate(mDb);
-
 		close();
 	}
 
@@ -203,7 +201,6 @@ public class DatabaseAdapter extends SQLiteOpenHelper {
 	}
 
 	public Cursor query(SelectStatement select) {
-		//Log.d("SQlite", select.toString());
 		return mDb.rawQuery(select.toString(), null);
 	}
 
@@ -474,12 +471,10 @@ public class DatabaseAdapter extends SQLiteOpenHelper {
 				for(Entry<String, DataField<?>> entry : definition.getFields()) {
 					if(!columns.contains(entry.getKey())) {
 						String coldef = entry.getValue().getDefinition(entry.getKey());
-						//Log.d(TAG, String.format("alter table %s add column %s", definition.getTableName(), coldef));
 						db.execSQL(String.format("alter table %s add column %s", definition.getTableName(), coldef));
 					}
 					// create indices for foreign key fields
 					if(entry.getValue() instanceof ForeignKeyField)
-						//Log.d(TAG, String.format("create index if not exists %s_fk_idx on %s(%s)", entry.getKey(), definition.getTableName(), entry.getKey()));
 						db.execSQL(String.format("create index if not exists %s_fk_idx on %s(%s)", entry.getKey(), definition.getTableName(), entry.getKey()));
 				}
 			}

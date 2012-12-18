@@ -1,5 +1,5 @@
 /**
- * 	Copyright (c) 2010 Philipp Giese
+ * 	Copyright (C) 2012 Clyde Stubbs,   2010 Philipp Giese
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,8 +21,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 package com.orm.androrm;
-
-import java.util.ArrayList;
 
 /**
  * This field implicitly assumes Foreign Key relations
